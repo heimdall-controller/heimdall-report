@@ -1,0 +1,88 @@
+\documentclass{article}
+
+\usepackage{array}
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+
+% Set page size and margins
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\graphicspath{ {figures/} }
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Gjallarhorn - A Kubernetes Extension}
+\author{Bryan Keane}
+
+\begin{document}
+\maketitle
+\newpage
+
+\tableofcontents
+\newpage
+
+\listoffigures
+\newpage
+
+\listoftables
+\newpage
+
+\section{Plagiarism Declaration}
+I declare... yada yada yada
+\section{Acknowledgements}
+Tanks lads... 
+
+\section{Introduction}
+Atomic Kubernetes Resources is an open-source Kubernetes tool which facilitates easier and less problematic multi-operator containerized application development for its users. Implementing this solution will allow developers to configure the custom controller to watch resources of their choice and connect the controller with their team’s slack channel to receive interactive notifications when the resource is being updated by the incorrect operator. Users can go as far as setting an atomic owner of resources and blocking other operators from making changes.
+
+\subsection{Motivation}
+In 2022 I completed an 8-month Internship at Red Hat as part of my work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team, gaining first-hand experience working with Kubernetes, Red Hat OpenShift, Go Operators, and many other related technologies. RHOAM utilises multiple OpenShift Operators to provide a comprehensive API solution that includes API creation, management, monitoring, authentication, and more. While this is great for customers, it can lead to some problems for developers. 
+I encountered this problem during various stages of my internship and initially, it took multiple days of debugging to figure out what was going wrong. Another week had passed before my code changes were accepted meaning this problem had been occurring on the cluster for weeks before it was fixed. This was just a development cluster, although the same version of the product I was working on was running on customer-facing clusters. This meant that the problem was potentially causing service disruptions without their knowledge. After speaking to other developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that most Kubernetes and OpenShift projects face at some point.
+
+\subsection{Problem Statement}
+In Kubernetes, custom resources are YAML files which store the desired state of an object. An Operator can become a watcher of an object, where it will compare the current state of that object with the desired state stored in its YAML file. If the states don’t match up, the operator’s controller will reconcile the object’s state so that they match. This is an integral part of how Kubernetes functions, but it has its flaws. Figure 1.3-1 below models a common problem which occurs often on multi-operator products.
+
+Figure 1.3-1: Model of the problem
+Kubernetes natively supports multiple operators to watch the state of a single resource. This can cause issues with object states and is the foundation of this project. During my Internship, I was working on a ticket which involved implementing pod count auto-scaling where the number of pods scales up based on the amount of load each pod is experiencing. During this work, I observed some peculiar behaviour. When I forced the pod’s load to increase the number of pods increased as expected, but shortly after the pod count returned to its original number. After observing for some time, it became apparent that something was scaling the pods up and down continuously. I discovered it was two OpenShift Operators fighting over the state of the pod. Each operator had a desired state for the pod’s deployment, where one operator wanted three replicas of the pod and the other operator wanted two replicas so they underwent a sort of tug-of-war, fighting over how many pods should be running. This is a common problem where two operators can watch the same resource and have conflicting resource definitions, so the operators' controllers fight to keep the pod in their preferred state. It is a waste of resources and can cause interruptions for the end user.
+
+\subsection{Industry Example}
+\subsection{Aims and Objectives}
+\subsection{Risks}
+\subsection{Contributions}
+\subsection{Outline}
+\section{Methodology}
+\subsection{Agile}
+\subsection{Scrum Roles}
+\subsection{Scrum Artifacts}
+\subsection{Continuous Integration}
+\subsection{Continuous Delivery}
+\subsection{Testing Approach}
+\subsection{Open Source}
+\section{Technologies}
+\section{Tools}
+\section{Design}
+\subsection{System Architecture Overview}
+\subsection{Requirements}
+\subsection{Functional Requirements}
+\subsection{Non Functional Requirements}
+\subsection{Core Requirements and Stretch Goals}
+\subsection{User Stories}
+\subsection{User Definitions}
+\subsection{Models}
+\section{Prototype}
+\subsection{Proof of Concept}
+\section{Reflection}
+\section{Summary}
+\subsection{Review}
+\subsection{Semester 2 Outline}
+\section{Appendices}
+
+\bibliographystyle{alpha}
+\bibliography{sample}
+
+
+\end{document}

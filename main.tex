@@ -24,38 +24,13 @@
 \listoftables
 \newpage
 
-%------------------------%
-%                        %
-% PLAGIARISM DECLARATION %  
-%                        %
-%------------------------%
-
 \section{Plagiarism Declaration}
-I declare... TODO
-
-%------------------%
-%                  %
-% ACKNOWLEDGEMENTS %  
-%                  %
-%------------------%
-
+I declare... yada yada yada
 \section{Acknowledgements}
-Thanks... TODO
-
-%--------------%
-%              %
-% INTRODUCTION %  
-%              %
-%--------------%
+Tanks lads... 
 
 \section{Introduction}
 Atomic Kubernetes Resources is an open-source Kubernetes tool which facilitates the development of less problematic multi-operator containerized applications. Implementing this solution will allow developers to configure the custom controller to watch resources of their choice and connect the controller with their team’s slack channel to receive interactive notifications when the resource is being updated by the incorrect operator. Users can go as far as setting an atomic owner of resources and blocking other operators from making changes.
-
-%------------%
-%            %
-% BACKGROUND %  
-%            %
-%------------%
 
 \subsection{Background}
 In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators (automatically managed and configured applications) to provide a comprehensive API solution to its customers. The API management features provided include
@@ -67,21 +42,9 @@ In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placem
 \end{itemize}
 While working on this team, I had the opportunity to contribute to applications which utilize various technologies like Kubernetes, OpenShift, and Go Operators.
 
-%------------%
-%            %
-% MOTIVATION %  
-%            %
-%------------%
-
 \subsection{Motivation}
 ternship. One of which was with RHOAM’s rate-limiting service and is the motivation for Gjallarhorn. Rate-limiting is done with the Marin3r Operator for OpenShift clusters (Red Hat’s container orchestration platform). It works by injecting a rate-limiting container into the Pod being rate-limited. The container works by acting as a middleman for requests. It  takes in requests and sends them to the destination container if the rate of requests has not reached the limit. The bug I found was that the port to send requests through the rate-limit container was being overwritten by a rogue Operator and set back by the owner Operator. This meant that customers who had RHOAM installed were not getting consistently rate-limited. As a result, an influx of requests could have overloaded Pod CPU and Memory, causing needless stress to the cluster.
 It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached customers. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application.
-
-%-------------------%
-%                   %
-% PROBLEM STATEMENT %  
-%                   %
-%-------------------%
 
 \subsection{Problem Statement}
 In Kubernetes (K8s), custom resources consist of YAML files which store the desired state of an object (a resource in Kubernetes like Pods and Deployments). 
@@ -90,7 +53,7 @@ If the states differ, the operator’s controller will reconcile the object’s 
 
 \begin{figure}[!hb]
     \centering
-    \includegraphics[width=100mm]{./resources/problem-model.png}
+    \includegraphics[width=100mm]{resources/problem-model.png}
     \caption{Model of a common problem in multi-operator Kubernetes clusters}
     \label{problem-model}
 \end{figure}
@@ -103,20 +66,8 @@ I discovered it was two OpenShift Operators fighting over the state of the pod.
 Each operator had a desired state for the pod’s deployment, where one operator wanted three replicas of the pod and the other operator wanted two replicas so they underwent a sort of tug-of-war, fighting over how many pods should be running. 
 This is a common problem where two operators can watch the same resource and have conflicting resource definitions, so the operators' controllers fight to keep the pod in their preferred state. It is a waste of resources and can cause interruptions for the end user.
 
-%------------------%
-%                  %
-% INDUSTRY EXAMPLE %  
-%                  %
-%------------------%
-
 \subsection{Industry Example}
 TODO: Split up the Problem statement into how the problem works exactly and an example in a context different to the one I encountered
-
-%---------------------%
-%                     %
-% AIMS AND OBJECTIVES %  
-%                     %
-%---------------------%
 
 \subsection{Aims and Objectives}
 The solution is to create a custom Kubernetes controller which will monitor resource states. 
@@ -125,7 +76,7 @@ If the resource is changed by another operator the controller will fire an alert
 
 \begin{figure}[!hb]
     \centering
-    \includegraphics[width=75mm]{./resources/solution-model.png}
+    \includegraphics[width=75mm]{resources/solution-model.png}
     \caption{Model of the solution: Gjallarhorn}
     \label{solution-model}
 \end{figure}
@@ -135,12 +86,6 @@ Once Operator A is installed, it creates the resource and instructs Gjallarhorn 
 Once Operator B is installed and changes the resource. 
 Gjallarhorn sees this occurring and will send the developers a notification through slack which will remove the need for debugging and allow the developer to get a fix pushed as soon as possible. 
 The stretch goal for this product would be to completely block Operator B from changing the resource so the developers have an interim solution to the bug while they push a fix to the relevant operator, preventing any customer downtime.
-
-%-------%
-%       %
-% RISKS %  
-%       %
-%-------%
 
 \subsection{Risks}
 TODO(): this is a risky project as it has never been done before 
@@ -176,5 +121,6 @@ TODO(): this is a risky project as it has never been done before
 
 \bibliographystyle{alpha}
 \bibliography{sample}
+
 
 \end{document}

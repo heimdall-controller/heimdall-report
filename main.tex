@@ -37,8 +37,7 @@
     %----------------------------------------------------------------------------------------
     %	HEADING SECTIONS
     %----------------------------------------------------------------------------------------
-    \textsc{\LARGE (BSc) Applied Computing}\\[0.25cm]
-    \textsc{\Large Cloud \& Networks}\\[0.25cm] 
+    \textsc{\Large Bachelor of Science (Hons) Applied Computing}\\[0.25cm]
     
     
     %----------------------------------------------------------------------------------------
@@ -95,12 +94,14 @@ Thank people... TODO
 
 \newpage
 \section{Introduction}
+Heimdall is an open-source Kubernetes Extension built for multi-operator Kubernetes environments. It ...
+
 Heimdall is an open-source Kubernetes tool which facilitates the stress-free development of containerized applications utilizing multiple Kubernetes Operators. Implementing this solution will allow developers to configure the custom controller to watch resources of their choice and connect the controller with their team’s slack channel to receive interactive notifications when the resource is being updated by the incorrect operator. Users can go as far as setting an atomic owner of resources and blocking other operators from making changes.
 
 
 
 \subsection{Background}
-In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators (automatically managed and configured applications) to provide a comprehensive API solution to its customers. The API management features provided include
+In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators (automatically managed and configured applications) to provide a comprehensive API solution to its customers. The API management features provided by RHOAM include \cite{rhoam-overview}
 \begin{itemize}
     \itemsep0em 
     \item Limiting the number of API requests based on the customer’s purchased quota
@@ -113,23 +114,18 @@ While working on this team, I had the opportunity to contribute to applications 
 
 
 \subsection{Motivation} 
-(\emph{Going to use rate-limit example or pod replica count example})
-I encountered various problems during my internship. One of which was with RHOAM’s rate-limiting service and is the motivation for Heimdall. Rate-limiting is done with the Marin3r Operator for OpenShift clusters (Red Hat’s container orchestration platform). It works by injecting a rate-limiting container into the Pod being rate-limited. The container works by acting as a middleman for requests. It takes in requests and sends them to the destination container if the rate of requests has not reached the limit. The bug I found was that the port sends requests through the rate-limit container was being overwritten by a rogue Operator and set back by the owner Operator. This meant that customers who had RHOAM installed were not being consistently rate-limited. As a result, an influx of requests could have overloaded Pod CPU and Memory, causing needless stress to the cluster. It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached customers. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application.
-
-
-
-(\emph{OLD PROBLEM STATEMENT - SAVING FOR REFERENCE}) Kubernetes natively supports multiple operators to watch the state of a single resource. This can cause problems like the one described in Figure \ref{problem-model}. This can cause issues with object states and is the foundation of this project. During my Internship, I was working on a ticket which involved implementing pod count auto-scaling where the number of pods scales up based on the load each pod is experiencing. During this work, I observed some peculiar behaviour. When I forced the pod’s load to increase the number of pods increased as expected, but shortly after the pod count returned to its original number. After observing for some time, it became apparent that something was scaling the pods up and down continuously. I discovered it was two OpenShift Operators fighting over the state of the pod. Each operator had the desired shape for the pod’s deployment, where one operator wanted three replicas of the pod and the other operator wanted two replicas so they underwent a sort of tug-of-war, fighting over how many pods should be running. This is a common problem where two operators can watch the same resource and have conflicting resource definitions, so the operators' controllers fight to keep the pod in their preferred state. It wastes resources and can cause interruptions for the end user.
+Throughout my internship, I ran into a number of technical issues including one with RHOAM's rate-limiting service which has become the motivation for my project, Heimdall. A rate limit is the maximum number of API calls allowed during a specified period of time \cite{understanding-apis}. RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. \\\\I discovered a bug with the port that API requests were sent to for rate-limiting. The port was being overwritten by a conflicting Operator who had a different desired state for that Pod. This meant that customers who had RHOAM installed were not being consistently rate-limited. \\\\It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached them. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
 
 
 
 \subsection{Problem Statement}
-In Kubernetes (K8s), custom resources (or objects) have a state in which they should remain which are stored in YAML files called custom resource definitions. When an Operator is watching a resource's state, it is continuously comparing the state defined in that resource's YAML definition with its actual state. If these don't match, it is the Operator's job to make the necessary changes in order for the desired state and actual state to match \cite{operator-pattern}. 
+In Kubernetes (K8s), custom resources (or objects) have a state in which they should remain which are stored in YAML files called custom resource definitions. When an Operator is watching a resource's state, it continuously compares the state defined in that resource's YAML definition with its actual state. If these don't match, it is the Operator's job to make the necessary changes in order for the desired state and actual state to match \cite{operator-pattern}. 
 
-\begin{figure}[!hb]
+\begin{figure}[H]
     \hypertarget{problem-model}
     \centering
-    \includegraphics[width=100mm]{problem-model.png}
-    \caption{Model of Two Operators Watching a Single Resource's State}
+    \includegraphics[width=125mm]{new-problem-model.png}
+    \caption{Model of The Problem - Two Operators Fighting Over a Resource's State}
     \label{problem-model}
 \end{figure}
 
@@ -140,21 +136,20 @@ This pattern works well until two Operators with conflicting YAML definitions ar
 \subsection{Industry Example}
 As an example, the open-source e-learning platform Moodle will be used. In an education environment, one might have a Moodle Operator and a MySQL Operator as that is the back-end database used by the platform. The MySQL Operator manages the storing, of course, student, and module information. This application may then install a Tutors Operator, which is another e-learning platform which houses course notes and lab work. Since there is already a MySQL database via the MySQL Operator, Tutors can use the same database to store course notes and lab work. 
 
-\begin{figure}[!hb]
+\begin{figure}[H]
     \hypertarget{moodle-tutors}
     \centering
     \includegraphics[width=100mm]{moodle-example.png}
-    \caption{Model of Moodle, Tutors, and MySQL Industry Example}
+    \caption{Model of a Moodle, Tutors, and MySQL Industry Example}
     \label{moodle-tutors}
 \end{figure}
 
-In this example, it would be very easy to misconfigure one of the Operators to have a diverging desired state for the MySQL resource. This would cause both Operators to constantly change that resource. Imagine Moodle wanted the port in which database access occurred to be port 8000 and Tutors wanted the database access to occur through port 8001. This would cause the MySQL resource's access port to be changed back and forth. If a lecturer or student was attempting to access information through Moodle, but at that point in time the MySQL resource's port was configured by the Tutors Operator, the user would not be able to retrieve the data.
-
+In this example, it would be very easy to misconfigure one of the Operators to have a diverging desired state for the MySQL resource. This would cause both Operators to constantly change that resource. Imagine Moodle wanted the port in which database access occurred to be port 8000 and Tutors wanted the database access to occur through port 8001. This would cause the MySQL resource's access port to be changed back and forth. If a lecturer or student was attempting to access information through Moodle, but at that point in time the MySQL resource's port was configured by the Tutors Operator, the user would not be able to retrieve the data. 
 
 \subsection{Aims and Objectives}
-The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If the resource is changed by another operator the controller will fire an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
+The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If another operator changes the resource the controller will fire an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
 
-\begin{figure}[!hb]
+\begin{figure}[H]
     \centering
     \includegraphics[width=75mm]{solution-model.png}
     \caption{Model of the solution: Heimdall}
@@ -315,11 +310,14 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
 \begin{thebibliography}{9}
 
 
-\bibitem[What is Agile?, 2022]{what-is-agile}(accessed Oct. 24, 2022). 
+\bibitem[What is Agile?, 2022]{what-is-agile}
 \emph{Atlassian}, \\URL: https://www.atlassian.com/agile 
 
-\bibitem[Operator Pattern, 2022]{operator-pattern}(accessed Nov. 03, 2022).
+\bibitem[Operator Pattern, 2022]{operator-pattern}
 \emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
+
+\bibitem[IBM API-Connect, 2022]{understanding-apis}
+\emph{Understanding rate limits for APIs and Plans}, \\URL: https://www.ibm.com/docs/en/api-connect/10.0.1.x?topic=connect-understanding-rate-limits-apis-plans
 
 \bibitem[M. McCormick, 2012]{agile-waterfall}
 \emph{Waterfall vs Agile Methodology}, M. McCormick, \\2nd ed. MPCS, Inc., 2012.
@@ -329,6 +327,10 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
   
 \bibitem[Kubernetes Overview, 2022]{k8s-overview}
 \emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/overview/  
+\bibitem[Red Hat Developer, 2020]{rhoam-overview}
+\emph{Red Hat OpenShift API Management}, Red Hat, Dec. 16, 2020. 
+\\URL: https://developers.redhat.com/products/red-hat-openshift-api-management/overview
+  
 
 
 \end{thebibliography}

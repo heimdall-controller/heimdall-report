@@ -1,14 +1,19 @@
-\documentclass{article}
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
 
+\documentclass{article}
 \usepackage{array}
 \usepackage[english]{babel}
 \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{float}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{todonotes}
 \graphicspath{ {resources/} }
 
-\title{Gjallarhorn - A Kubernetes Extension}
+\title{Heimdall - A Kubernetes Extension}
 \author{Bryan Keane}
 
 \begin{document}
@@ -32,8 +37,7 @@
     %----------------------------------------------------------------------------------------
     %	HEADING SECTIONS
     %----------------------------------------------------------------------------------------
-    \textsc{\LARGE (BSc) Applied Computing}\\[0.25cm]
-    \textsc{\Large Cloud \& Networks}\\[0.25cm] 
+    \textsc{\Large Bachelor of Science (Hons) Applied Computing}\\[0.25cm]
     
     
     %----------------------------------------------------------------------------------------
@@ -41,7 +45,7 @@
     %----------------------------------------------------------------------------------------
     
     \HRule \\[0.75cm]
-    { \huge \bfseries Gjallarhorn - A Kubernetes Extension}\\[0.3cm] %document
+    { \huge \bfseries Heimdall - A Kubernetes Extension}\\[0.3cm] %document
     \HRule \\[1.0cm]
      
     %----------------------------------------------------------------------------------------
@@ -62,7 +66,7 @@
     \end{flushright}
     \end{minipage}\\[2cm]
     
-    \end{titlepage}
+\end{titlepage}
 
 \newpage
 
@@ -75,19 +79,29 @@
 \listoftables
 \newpage
 
+
+
 \section{Plagiarism Declaration}
 I declare that this material, which I now submit for assessment, is entirely my own work and has not been taken from the work of others, save and to the extent that such work has been cited and acknowledged within the text of my work. I understand that plagiarism, collusion, and copying are grave and severe offences in the university and accept the penalties that would be imposed should I engage in plagiarism, collusion or copying. I have read and understood the Assignment Regulations. I have identified and included the source of all other facts, ideas, opinions, and viewpoints in the assignment references. Direct quotations from books, journal articles, internet sources, module text, or any other source are acknowledged and the source cited are identified in the bibliography. This assignment, or any part of it, has not been previously submitted by me or any other person for assessment on this or any other course of study.  
+
+
 
 \newpage
 \section{Acknowledgements}
 Thank people... TODO
 
+
+
 \newpage
 \section{Introduction}
-Gjallarhorn is an open-source Kubernetes tool which facilitates the stress-free development of containerized applications utilizing multiple Kubernetes Operators. Implementing this solution will allow developers to configure the custom controller to watch resources of their choice and connect the controller with their team’s slack channel to receive interactive notifications when the resource is being updated by the incorrect operator. Users can go as far as setting an atomic owner of resources and blocking other operators from making changes.
+Heimdall is an open-source Kubernetes Extension built for multi-operator Kubernetes environments. It ...
+
+Heimdall is an open-source Kubernetes tool which facilitates the stress-free development of containerized applications utilizing multiple Kubernetes Operators. Implementing this solution will allow developers to configure the custom controller to watch resources of their choice and connect the controller with their team’s slack channel to receive interactive notifications when the resource is being updated by the incorrect operator. Users can go as far as setting an atomic owner of resources and blocking other operators from making changes.
+
+
 
 \subsection{Background}
-In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators (automatically managed and configured applications) to provide a comprehensive API solution to its customers. The API management features provided include
+In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators (automatically managed and configured applications) to provide a comprehensive API solution to its customers. The API management features provided by RHOAM include \cite{rhoam-overview}
 \begin{itemize}
     \itemsep0em 
     \item Limiting the number of API requests based on the customer’s purchased quota
@@ -95,25 +109,23 @@ In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placem
     \item Monitoring API health
     \item An API portal for sign-up and documentation
 \end{itemize}
-
 While working on this team, I had the opportunity to contribute to applications which utilize various technologies like Kubernetes, OpenShift, and Go Operators.
 
+
+
 \subsection{Motivation} 
-(\emph{Going to use rate-limit example or pod replica count example})
-I encountered various problems during my internship. One of which was with RHOAM’s rate-limiting service and is the motivation for Gjallarhorn. Rate-limiting is done with the Marin3r Operator for OpenShift clusters (Red Hat’s container orchestration platform). It works by injecting a rate-limiting container into the Pod being rate-limited. The container works by acting as a middleman for requests. It takes in requests and sends them to the destination container if the rate of requests has not reached the limit. The bug I found was that the port sends requests through the rate-limit container was being overwritten by a rogue Operator and set back by the owner Operator. This meant that customers who had RHOAM installed were not being consistently rate-limited. As a result, an influx of requests could have overloaded Pod CPU and Memory, causing needless stress to the cluster. It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached customers. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application.
+Throughout my internship, I ran into a number of technical issues including one with RHOAM's rate-limiting service which has become the motivation for my project, Heimdall. A rate limit is the maximum number of API calls allowed during a specified period of time \cite{understanding-apis}. RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. \\\\I discovered a bug with the port that API requests were sent to for rate-limiting. The port was being overwritten by a conflicting Operator who had a different desired state for that Pod. This meant that customers who had RHOAM installed were not being consistently rate-limited. \\\\It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached them. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
 
-
-(\emph{OLD PROBLEM STATEMENT - SAVING FOR REFERENCE}) Kubernetes natively supports multiple operators to watch the state of a single resource. This can cause problems like the one described in Figure \ref{problem-model}. This can cause issues with object states and is the foundation of this project. During my Internship, I was working on a ticket which involved implementing pod count auto-scaling where the number of pods scales up based on the load each pod is experiencing. During this work, I observed some peculiar behaviour. When I forced the pod’s load to increase the number of pods increased as expected, but shortly after the pod count returned to its original number. After observing for some time, it became apparent that something was scaling the pods up and down continuously. I discovered it was two OpenShift Operators fighting over the state of the pod. Each operator had the desired shape for the pod’s deployment, where one operator wanted three replicas of the pod and the other operator wanted two replicas so they underwent a sort of tug-of-war, fighting over how many pods should be running. This is a common problem where two operators can watch the same resource and have conflicting resource definitions, so the operators' controllers fight to keep the pod in their preferred state. It wastes resources and can cause interruptions for the end user.
 
 
 \subsection{Problem Statement}
-In Kubernetes (K8s), custom resources (or objects) have a state in which they should remain which are stored in YAML files called custom resource definitions. When an Operator is watching a resource's state, it is continuously comparing the state defined in that resource's YAML definition with its actual state. If these don't match, it is the Operator's job to make the necessary changes in order for the desired state and actual state to match \cite{operator-pattern}. 
+In Kubernetes (K8s), custom resources (or objects) have a state in which they should remain which are stored in YAML files called custom resource definitions. When an Operator is watching a resource's state, it continuously compares the state defined in that resource's YAML definition with its actual state. If these don't match, it is the Operator's job to make the necessary changes in order for the desired state and actual state to match \cite{operator-pattern}. 
 
-\begin{figure}[!hb]
+\begin{figure}[H]
     \hypertarget{problem-model}
     \centering
-    \includegraphics[width=100mm]{problem-model.png}
-    \caption{Model of Two Operators Watching a Single Resource's State}
+    \includegraphics[width=125mm]{new-problem-model.png}
+    \caption{Model of The Problem - Two Operators Fighting Over a Resource's State}
     \label{problem-model}
 \end{figure}
 
@@ -122,29 +134,36 @@ This pattern works well until two Operators with conflicting YAML definitions ar
 
 
 \subsection{Industry Example}
-(\emph{Going to use simple Moodle example})
-TODO: Split up the Problem statement into how the problem works exactly and an example in a context different to the one I encountered
+As an example, the open-source e-learning platform Moodle will be used. In an education environment, one might have a Moodle Operator and a MySQL Operator as that is the back-end database used by the platform. The MySQL Operator manages the storing, of course, student, and module information. This application may then install a Tutors Operator, which is another e-learning platform which houses course notes and lab work. Since there is already a MySQL database via the MySQL Operator, Tutors can use the same database to store course notes and lab work. 
 
+\begin{figure}[H]
+    \hypertarget{moodle-tutors}
+    \centering
+    \includegraphics[width=100mm]{moodle-example.png}
+    \caption{Model of a Moodle, Tutors, and MySQL Industry Example}
+    \label{moodle-tutors}
+\end{figure}
 
-
+In this example, it would be very easy to misconfigure one of the Operators to have a diverging desired state for the MySQL resource. This would cause both Operators to constantly change that resource. Imagine Moodle wanted the port in which database access occurred to be port 8000 and Tutors wanted the database access to occur through port 8001. This would cause the MySQL resource's access port to be changed back and forth. If a lecturer or student was attempting to access information through Moodle, but at that point in time the MySQL resource's port was configured by the Tutors Operator, the user would not be able to retrieve the data. 
 
 \subsection{Aims and Objectives}
-The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If the resource is changed by another operator the controller will fire an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
+The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If another operator changes the resource the controller will fire an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
 
-
-
-
-\begin{figure}[!hb]
+\begin{figure}[H]
     \centering
     \includegraphics[width=75mm]{solution-model.png}
-    \caption{Model of the solution: Gjallarhorn}
+    \caption{Model of the solution: Heimdall}
     \label{solution-model}
 \end{figure}
 
-Figure \ref{solution-model} models the proposed solution where Operator A represents the owner operator of the Monitored Resource, and Operator B represents the rogue operator which is causing the resource to change from the owner’s desired state. Once Operator A is installed, it creates the resource and instructs Gjallarhorn to monitor the resource’s state. Once Operator B is installed and changes the resource. Gjallarhorn sees this occurring and will send the developers a notification through slack which will remove the need for debugging and allow the developer to get a fix pushed as soon as possible. The stretch goal for this product would be to completely block Operator B from changing the resource so the developers have an interim solution to the bug while they push a fix to the relevant operator, preventing any customer downtime.
+Figure \ref{solution-model} models the proposed solution where Operator A represents the owner operator of the Monitored Resource, and Operator B represents the rogue operator which is causing the resource to change from the owner’s desired state. Once Operator A is installed, it creates the resource and instructs Heimdall to monitor the resource’s state. Once Operator B is installed and changes the resource. Heimdall sees this occurring and will send the developers a notification through slack which will remove the need for debugging and allow the developer to get a fix pushed as soon as possible. The stretch goal for this product would be to completely block Operator B from changing the resource so the developers have an interim solution to the bug while they push a fix to the relevant operator, preventing any customer downtime.
+
+
 
 \subsection{Risks}
 TODO(): this is a risky project as it has never been done before 
+
+
 
 \subsection{Contributions}
 
@@ -155,26 +174,29 @@ TODO(): this is a risky project as it has never been done before
 
 
 \section{Methodology}
-The chosen methodology for software development teams is paramount for the successful planning and development of a product. Currently, the most common methodology used is Agile, but before this the Waterfall Methodology was the gold standard. This method of development involves a distinct sequence of actions for engineers to follow. In short, it involved extensive design and planning before ever writing a line of code. Long documents detailing product design and strategy were written to fit the stakeholder's requirements. This proved to be ineffective as in most cases, holes in the design are discovered after beginning the implementation. In recent years, Agile has began replacing this framework as it has proven much more efficient for software development teams.
+The chosen methodology for software development teams is paramount for the successful planning and development of a product. Currently, the most common methodology used is Agile, but before this, the Waterfall Methodology was the gold standard. This method of development involves a distinct sequence of actions for engineers to follow. In short, it involved extensive design and planning before ever writing a line of code. Long documents detailing product design and strategy were written to fit the stakeholder's requirements. This proved to be ineffective as in most cases, holes in the design are discovered after beginning the implementation. In recent years, Agile has begun replacing this framework as it has proven much more efficient for software development teams \cite{agile-waterfall}.
 
 
 
 \subsection{Agile}
 "Agile is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches" \cite{what-is-agile}. TODO()
-
-
 DISCUSS AGILE + SCRUM
+
+
 
 \subsection{Scrum Roles}
 Scrum has three main roles: Scrum Master, the Product Owner, and the Development Team. These are used to help describe the responsibilities of each stakeholder for a product.
+
 
 
 \subsection{Scrum Artifacts}
 Teams who practice Agile and Scrum methodologies often collect Scrum Artifacts. These are pieces of information that a product's stakeholders and the team developing it use to describe its development. The main Scrum Artifacts used for this project include Product Backlog Refinement, Sprint Planning, and Sprint Reviews. There are also various Extended Artifacts that are not included in the official Scrum Artifacts definition. These include reporting mechanisms like Burn down Charts.
 
 
+
 \subsection{Version Control}
 What is VCS, Git, GitHub, 
+
 
 
 \subsection{Continuous Integration}
@@ -186,6 +208,7 @@ Version control lies at the heart of Continuous Integration. CI is an Agile prac
 Continuous Delivery is an approach 
 
 
+
 \subsection{Testing Approach}
 
 
@@ -195,11 +218,14 @@ Continuous Delivery is an approach
 
 
 \section{Technologies}
-Kubernetes, Golang, 
+
+\subsection{Kubernetes}
+
 
 
 \section{Tools}
 Minikube, Kubebuilder, Docker, Podman, Git, GitHub, Jira
+
 
 
 \section{Design}
@@ -234,8 +260,9 @@ As a Developer, I want to claim ownership of the resources that I control
 As a Developer, I want to control the changes to resources that I own.
 
 
+
 \subsection{Personal Stories}
-As a student, I want to have achieved a First Class Honors, so that I can reach my academic goals
+As a student, I want to have achieved First Class Honors, so that I can reach my academic goals
 As an aspiring Software Engineer, I want to have contributed a solution to a common problem faced by Software Engineers working with Kubernetes, so that I can make a valuable contribution..?? - something like that
 
 
@@ -248,7 +275,7 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
 
 
 
-\section{Prototype}
+\section{Prototypes}
 
 
 
@@ -275,6 +302,7 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
 \section{Appendices}
 
 
+
 \bibliographystyle{alpha}
 
 
@@ -282,12 +310,32 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
 \begin{thebibliography}{9}
 
 
-\bibitem[What is Agile?, 2022]{what-is-agile}(accessed Oct. 24, 2022). 
+\bibitem[What is Agile?, 2022]{what-is-agile}
 \emph{Atlassian}, \\URL: https://www.atlassian.com/agile 
 
-\bibitem[Operator Pattern, 2022]{operator-pattern}(accessed Nov. 03, 2022).
+\bibitem[Operator Pattern, 2022]{operator-pattern}
 \emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
+
+\bibitem[IBM API-Connect, 2022]{understanding-apis}
+\emph{Understanding rate limits for APIs and Plans}, \\URL: https://www.ibm.com/docs/en/api-connect/10.0.1.x?topic=connect-understanding-rate-limits-apis-plans
+
+\bibitem[M. McCormick, 2012]{agile-waterfall}
+\emph{Waterfall vs Agile Methodology}, M. McCormick, \\2nd ed. MPCS, Inc., 2012.
+
+\bibitem[I. Sommerville, 2021]{agile-book}
+\emph{Engineering Software Products: An Introduction to Modern Software Engineering}, 2021.
+  
+\bibitem[Kubernetes Overview, 2022]{k8s-overview}
+\emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/overview/  
+\bibitem[Red Hat Developer, 2020]{rhoam-overview}
+\emph{Red Hat OpenShift API Management}, Red Hat, Dec. 16, 2020. 
+\\URL: https://developers.redhat.com/products/red-hat-openshift-api-management/overview
+  
+
+
 \end{thebibliography}
+
+
 
 
 \end{document}

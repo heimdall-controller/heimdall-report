@@ -88,20 +88,18 @@ I declare that this material, which I now submit for assessment, is entirely my 
 
 \newpage
 \section{Acknowledgements}
-Thank people... TODO
+I would like to express my deepest appreciation to my Mentors Ciaran Roche and Laura Fitzgerald who provided invaluable experience and contributions to this project. I would also like to extend my deepest gratitude to my Project Supervisor Lucy white for guiding and encouraging me throughout the process.
 
 
 
 \newpage
 \section{Introduction}
-Heimdall is an open-source Kubernetes Extension built for multi-operator Kubernetes environments. It ...
-
-Heimdall is an open-source Kubernetes tool which facilitates the stress-free development of containerized applications utilizing multiple Kubernetes Operators. Implementing this solution will allow developers to configure the custom controller to watch resources of their choice and connect the controller with their team’s slack channel to receive interactive notifications when the resource is being updated by the incorrect operator. Users can go as far as setting an atomic owner of resources and blocking other operators from making changes.
+This project, Heimdall, is an open-source Kubernetes Extension built for multi-operator Kubernetes environments. Implementing Heimdall will allow developers to configure it to watch resources of their choosing in a Kubernetes cluster. Heimdall will prevent any unwanted Operators from changing that resource, while simultaneously sending an interactive notification to the developer via a pre-configured Slack Channel regarding the issue. 
 
 
 
 \subsection{Background}
-In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators (automatically managed and configured applications) to provide a comprehensive API solution to its customers. The API management features provided by RHOAM include \cite{rhoam-overview}
+In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators, which are automatically managed and configured applications, to provide a comprehensive API solution to its customers. The API management features provided by RHOAM include \cite{rhoam-overview}
 \begin{itemize}
     \itemsep0em 
     \item Limiting the number of API requests based on the customer’s purchased quota
@@ -114,7 +112,7 @@ While working on this team, I had the opportunity to contribute to applications 
 
 
 \subsection{Motivation} 
-Throughout my internship, I ran into a number of technical issues including one with RHOAM's rate-limiting service which has become the motivation for my project, Heimdall. A rate limit is the maximum number of API calls allowed during a specified period of time \cite{understanding-apis}. RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. \\\\I discovered a bug with the port that API requests were sent to for rate-limiting. The port was being overwritten by a conflicting Operator who had a different desired state for that Pod. This meant that customers who had RHOAM installed were not being consistently rate-limited. \\\\It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached them. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
+Throughout my internship, I ran into a number of technical issues including one with RHOAM's rate-limiting service which has become the motivation for my project, Heimdall. A rate limit is the maximum number of API calls allowed during a specified period of time \cite{understanding-apis}. RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. Pods, containers, and other terms mentioned here are discussed further in \hyperlink{technologies}{Section \ref{technologies}}. \\\par I discovered a bug with the port that API requests were sent to for rate-limiting. The port was being overwritten by a conflicting Operator who had a different desired state for that Pod. This meant that customers who had RHOAM installed were not being consistently rate-limited. \\\par It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached them. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
 
 
 
@@ -124,7 +122,7 @@ In Kubernetes (K8s), custom resources (or objects) have a state in which they sh
 \begin{figure}[H]
     \hypertarget{problem-model}
     \centering
-    \includegraphics[width=125mm]{new-problem-model.png}
+    \includegraphics[width=150mm]{new-problem-model.png}
     \caption{Model of The Problem - Two Operators Fighting Over a Resource's State}
     \label{problem-model}
 \end{figure}
@@ -139,8 +137,8 @@ As an example, the open-source e-learning platform Moodle will be used. In an ed
 \begin{figure}[H]
     \hypertarget{moodle-tutors}
     \centering
-    \includegraphics[width=100mm]{moodle-example.png}
-    \caption{Model of a Moodle, Tutors, and MySQL Industry Example}
+    \includegraphics[width=125mm]{moodle-example.png}
+    \caption{Model of Moodle, Tutors, and MySQL Industry Example}
     \label{moodle-tutors}
 \end{figure}
 
@@ -150,13 +148,14 @@ In this example, it would be very easy to misconfigure one of the Operators to h
 The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If another operator changes the resource the controller will fire an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
 
 \begin{figure}[H]
+    \hypertarget{solution-model}
     \centering
-    \includegraphics[width=75mm]{solution-model.png}
+    \includegraphics[width=100mm]{solution-model.png}
     \caption{Model of the solution: Heimdall}
     \label{solution-model}
 \end{figure}
 
-Figure \ref{solution-model} models the proposed solution where Operator A represents the owner operator of the Monitored Resource, and Operator B represents the rogue operator which is causing the resource to change from the owner’s desired state. Once Operator A is installed, it creates the resource and instructs Heimdall to monitor the resource’s state. Once Operator B is installed and changes the resource. Heimdall sees this occurring and will send the developers a notification through slack which will remove the need for debugging and allow the developer to get a fix pushed as soon as possible. The stretch goal for this product would be to completely block Operator B from changing the resource so the developers have an interim solution to the bug while they push a fix to the relevant operator, preventing any customer downtime.
+\hyperlink{solution-model}{Figure \ref{solution-model}} models the proposed solution where the Owner Operator and Rogue Operator are attempting to change a resource's actual state. Once the Owner Operator is installed, it creates the resource with the addition of a label that Heimdall is looking for. Heimdall sees a new resource has been created with this label and begins monitoring its state. The Rogue Operator is installed and begins changing the resource. \\\par The minimum viable product for Heimdall involves the controller watching for non-owners changing the state of a resource. It will then generate an interactive notification for slack with details on the issue to allow the developers to find and fix the problem with relative ease. The stretch goals for Heimdall will involve allowing for an atomic owner of a resource to be set and blocking of changes from non-owners. This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user.
 
 
 
@@ -174,7 +173,7 @@ TODO(): this is a risky project as it has never been done before
 
 
 \section{Methodology}
-The chosen methodology for software development teams is paramount for the successful planning and development of a product. Currently, the most common methodology used is Agile, but before this, the Waterfall Methodology was the gold standard. This method of development involves a distinct sequence of actions for engineers to follow. In short, it involved extensive design and planning before ever writing a line of code. Long documents detailing product design and strategy were written to fit the stakeholder's requirements. This proved to be ineffective as in most cases, holes in the design are discovered after beginning the implementation. In recent years, Agile has begun replacing this framework as it has proven much more efficient for software development teams \cite{agile-waterfall}.
+The chosen methodology for software development teams is paramount for the successful planning and development of a product. Historically, the Waterfall Methodology was commonplace - but now Agile is the gold standard. Waterfall involved a distinct sequence of actions for engineers to follow. In short, it involved extensive design and planning before ever writing a line of code. Long documents detailing product design and strategy were written to fit the stakeholder's requirements. This proved to be ineffective as in most cases, holes in the design are discovered after beginning the implementation. In recent years, Agile has begun replacing this framework as it has proven much more efficient for software development teams \cite{agile-waterfall}.
 
 
 
@@ -217,7 +216,8 @@ Continuous Delivery is an approach
 
 
 
-\section{Technologies}
+\section{Technologies} \label{technologies} \hypertarget{technologies}{}
+
 
 \subsection{Kubernetes}
 

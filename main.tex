@@ -99,10 +99,10 @@ This project, Heimdall, is an open-source Kubernetes Extension built for multi-o
 
 
 \subsection{Background}
-In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators, which are automatically managed and configured applications, to provide a comprehensive API solution to its customers. The API management features provided by RHOAM include \cite{rhoam-overview}
+In 2022 I completed an 8-month internship at Red Hat for my 3rd-year work placement. I worked on the Red Hat OpenShift API Management (RHOAM) team. RHOAM utilises multiple OpenShift Operators, which are automatically managed and configured applications, to provide a comprehensive API solution to its customers. The API management features provided by RHOAM include: \cite{rhoam-overview}
 \begin{itemize}
     \itemsep0em 
-    \item Limiting the number of API requests based on the customer’s purchased quota
+    \item Limiting the number of API requests based on the customer’s quota
     \item Creating security policies to manage API access
     \item Monitoring API health
     \item An API portal for sign-up and documentation
@@ -112,12 +112,12 @@ While working on this team, I had the opportunity to contribute to applications 
 
 
 \subsection{Motivation} 
-Throughout my internship, I ran into a number of technical issues including one with RHOAM's rate-limiting service which has become the motivation for my project, Heimdall. A rate limit is the maximum number of API calls allowed during a specified period of time \cite{understanding-apis}. RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. Pods, containers, and other terms mentioned here are discussed further in \hyperlink{technologies}{Section \ref{technologies}}. \\\par I discovered a bug with the port that API requests were sent to for rate-limiting. The port was being overwritten by a conflicting Operator who had a different desired state for that Pod. This meant that customers who had RHOAM installed were not being consistently rate-limited. \\\par It took multiple days of debugging to figure out what was going wrong and another week passed before my code changes were merged. This meant that this problem had been occurring on customer clusters for an unknown amount of time before the fix reached them. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and is an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
+Throughout my internship, I ran into a number of technical issues. One such issue centred around RHOAM's rate-limiting service which has become the motivation for my final year project, Heimdall. The issue in question was with the port through which API requests were being sent in order to be rate limited. That port was being overwritten by a conflicting Operator who had a different desired state for that resource. Rate limiting in this context refers to the maximum number of API calls allowed during a specified time period \cite{understanding-apis} \\\par RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. A more detailed explanation of this process will be discussed in \hyperlink{technologies}{Section \ref{technologies}}. \\\par It took several days of debugging to figure out what was going wrong and another week passed before my fix was merged. This meant that this problem had been occurring on customer clusters before my fix was rolled out to production. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and in fact, was an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
 
 
 
 \subsection{Problem Statement}
-In Kubernetes (K8s), custom resources (or objects) have a state in which they should remain which are stored in YAML files called custom resource definitions. When an Operator is watching a resource's state, it continuously compares the state defined in that resource's YAML definition with its actual state. If these don't match, it is the Operator's job to make the necessary changes in order for the desired state and actual state to match \cite{operator-pattern}. 
+In Kubernetes (K8s), resources (or objects) have a desired state which describes what the actual state of that resource should look like. The desired state can either lie in a YAML definition or in the code of a Controller. Operators and Controllers can watch that resource's actual state and continuously compare it with the desired state. If they do not match then it is the job of that Operator or Controller to make the necessary changes in order to synchronise them \cite{operator-pattern}.
 
 \begin{figure}[H]
     \hypertarget{problem-model}
@@ -127,25 +127,35 @@ In Kubernetes (K8s), custom resources (or objects) have a state in which they sh
     \label{problem-model}
 \end{figure}
 
-This pattern works well until two Operators with conflicting YAML definitions are both set to watch a resource. This will cause the resource's state to continuously change as both Operators attempt to synchronise its actual state with their unique desired state. The model shown in \hyperlink{problem-model}{Figure \ref{problem-model}} shows this problem in action. Each Operator watches their Custom Resource desired state and instructs their controller to make the necessary changes to ensure the actual resource state matches.
+This pattern works well until two Operators with conflicting desired states are both set to reconcile a resource. This will cause the resource's state to continuously change as both Operators attempt to synchronise its actual state with their unique desired state. The model shown in \hyperlink{problem-model}{Figure \ref{problem-model}} shows this problem in action. Each Operator will do the following:
+\begin{enumerate}
+    \itemsep0em 
+    \item Watch a resource's actual state.
+    \item Check the desired state for that resource.
+    \item Compare the actual state with the desired state and
+    \subitem 3.1. \emph{If they match} then return to Step 1. and repeat.
+    \subitem 3.2. \emph{If they don't match} then continue to Step 4.
+    \item Modify the resource's actual state so that it matches the desired state.
+    \item Repeat this process continuously.
+\end{enumerate}
 
 
 
-\subsection{Industry Example}
-As an example, the open-source e-learning platform Moodle will be used. In an education environment, one might have a Moodle Operator and a MySQL Operator as that is the back-end database used by the platform. The MySQL Operator manages the storing, of course, student, and module information. This application may then install a Tutors Operator, which is another e-learning platform which houses course notes and lab work. Since there is already a MySQL database via the MySQL Operator, Tutors can use the same database to store course notes and lab work. 
+\subsubsection{Industry Example}
+As an example, the open-source e-learning platform Moodle can be used. In an education environment, one might have a Moodle Operator and a MySQL Operator to serve as Moodle's database. The MySQL Operator manages the storing, of course, student, and module information. This application may then install a Tutors Operator, which is another e-learning platform which houses course notes and lab work. Since there is already a MySQL database via the MySQL Operator, Tutors can use the same database to store course notes and lab work. 
 
 \begin{figure}[H]
     \hypertarget{moodle-tutors}
     \centering
-    \includegraphics[width=125mm]{moodle-example.png}
-    \caption{Model of Moodle, Tutors, and MySQL Industry Example}
+    \includegraphics[width=125mm]{new-moodle-example.png}
+    \caption{Simplified Model of Moodle, Tutors, and MySQL Industry Example}
     \label{moodle-tutors}
 \end{figure}
 
-In this example, it would be very easy to misconfigure one of the Operators to have a diverging desired state for the MySQL resource. This would cause both Operators to constantly change that resource. Imagine Moodle wanted the port in which database access occurred to be port 8000 and Tutors wanted the database access to occur through port 8001. This would cause the MySQL resource's access port to be changed back and forth. If a lecturer or student was attempting to access information through Moodle, but at that point in time the MySQL resource's port was configured by the Tutors Operator, the user would not be able to retrieve the data. 
+In this example, it would be very easy to misconfigure one of the Operators to have a dissimilar desired state for the MySQL resource. This would cause both Operators to constantly change that resource. Imagine Moodle wanted the port in which database access occurred to be port 80 and Tutors wanted the database access to occur through port 81. This would cause the MySQL resource's access port to be changed back and forth. If a lecturer or student attempts to access information through Moodle, but at that point in time the MySQL resource's port was configured by the Tutors Operator, the user would not be able to retrieve the data. 
 
 \subsection{Aims and Objectives}
-The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If another operator changes the resource the controller will fire an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
+The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If another operator changes the resource the controller will trigger an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
 
 \begin{figure}[H]
     \hypertarget{solution-model}

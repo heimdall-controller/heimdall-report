@@ -122,7 +122,7 @@ In Kubernetes (K8s), resources (or objects) have a desired state which describes
 \begin{figure}[H]
     \hypertarget{problem-model}
     \centering
-    \includegraphics[width=150mm]{new-problem-model.png}
+    \includegraphics[width=150mm]{intro/new-new-problem-model.png}
     \caption{Model of The Problem - Two Operators Fighting Over a Resource's State}
     \label{problem-model}
 \end{figure}
@@ -142,7 +142,7 @@ This pattern works well until two Operators with conflicting desired states are 
 
 
 \subsubsection{Industry Example}
-As an example, the open-source e-learning platform Moodle can be used. In an education environment, one might have a Moodle Operator and a MySQL Operator to serve as Moodle's database. The MySQL Operator manages the storing, of course, student, and module information. This application may then install a Tutors Operator, which is another e-learning platform which houses course notes and lab work. Since there is already a MySQL database via the MySQL Operator, Tutors can use the same database to store course notes and lab work. 
+As an example, the open-source e-learning platform Moodle can be used. In an educational environment, one might have a Moodle Operator and a MySQL Operator to serve as Moodle's database. The MySQL Operator manages the storing, of course, student, and module information. This application may then install a Tutors Operator, which is another e-learning platform which houses course notes and lab work. Since there is already a MySQL database via the MySQL Operator, Tutors can use the same database to store course notes and lab work. 
 
 \begin{figure}[H]
     \hypertarget{moodle-tutors}

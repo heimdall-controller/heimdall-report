@@ -11,6 +11,8 @@
 \usepackage{float}
 \usepackage[colorlinks=true, allcolors=blue]{hyperref}
 \usepackage{todonotes}
+\usepackage{setspace}
+\onehalfspacing
 \graphicspath{ {resources/} }
 
 \title{Heimdall - A Kubernetes Extension}
@@ -115,15 +117,15 @@ While working on this team, I had the opportunity to contribute to applications 
 Throughout my internship, I ran into a number of technical issues. One such issue centred around RHOAM's rate-limiting service which has become the motivation for my final year project, Heimdall. The issue in question was with the port through which API requests were being sent in order to be rate limited. That port was being overwritten by a conflicting Operator who had a different desired state for that resource. Rate limiting in this context refers to the maximum number of API calls allowed during a specified time period \cite{understanding-apis} \\\par RHOAM uses the Marin3r Operator to provide rate-limiting for RHOAM customers. It works by injecting a rate-limiting container into a Pod. The container then acts as a middleman for API requests by only redirecting requests to the destination container if the API request limit has not been reached. A more detailed explanation of this process will be discussed in \hyperlink{technologies}{Section \ref{technologies}}. \\\par It took several days of debugging to figure out what was going wrong and another week passed before my fix was merged. This meant that this problem had been occurring on customer clusters before my fix was rolled out to production. After speaking to developers on various Red Hat teams, it became apparent that this problem was not unique to our team and in fact, was an issue that all Kubernetes and OpenShift product teams face. Fixing this will not only benefit Red Hat teams but any team working on a Kubernetes-based application that utilizes Operators.
 
 
-
-\subsection{Problem Statement}
+\newpage
+\subsection{Problem Statement} \label{problem-statement}
 In Kubernetes (K8s), resources (or objects) have a desired state which describes what the actual state of that resource should look like. The desired state can either lie in a YAML definition or in the code of a Controller. Operators and Controllers can watch that resource's actual state and continuously compare it with the desired state. If they do not match then it is the job of that Operator or Controller to make the necessary changes in order to synchronise them \cite{operator-pattern}.
 
 \begin{figure}[H]
     \hypertarget{problem-model}
     \centering
     \includegraphics[width=150mm]{intro/problem-model.png}
-    \caption{Model of The Problem - Two Operators Fighting Over a Resource's State}
+    \caption{\emph{Model of The Problem - Two Operators Fighting Over a Resource's State}}
     \label{problem-model}
 \end{figure}
 
@@ -134,8 +136,7 @@ This pattern works well until two Operators with conflicting desired states are 
     \item Check the desired state for that resource.
     \item Compare the actual state with the desired state and
     \subitem 3.1. \emph{If they match} then return to Step 1. and repeat.
-    \subitem 3.2. \emph{If they don't match} then continue to Step 4.
-    \item Modify the resource's actual state so that it matches the desired state.
+    \subitem 3.2. \emph{If they don't match} then modify the resource's actual state.
     \item Repeat this process continuously.
 \end{enumerate}
 
@@ -148,7 +149,7 @@ As an example, the open-source e-learning platform Moodle can be used. In an edu
     \hypertarget{moodle-tutors}
     \centering
     \includegraphics[width=125mm]{new-moodle-example.png}
-    \caption{Simplified Model of Moodle, Tutors, and MySQL Industry Example}
+    \caption{\emph{Simplified Model of Moodle, Tutors, and MySQL Industry Example}}
     \label{moodle-tutors}
 \end{figure}
 
@@ -161,7 +162,7 @@ The solution is to create a custom Kubernetes controller which will monitor reso
     \hypertarget{solution-model}
     \centering
     \includegraphics[width=100mm]{solution-model.png}
-    \caption{Model of the solution: Heimdall}
+    \caption{\emph{Model of the solution: Heimdall}}
     \label{solution-model}
 \end{figure}
 
@@ -170,16 +171,11 @@ The solution is to create a custom Kubernetes controller which will monitor reso
 
 
 \subsection{Risks}
-TODO(): this is a risky project as it has never been done before 
-
-
-
-\subsection{Contributions}
-
+The stretch goals of this project come with substantial risk. Never before has it been attempted to block an Operator or Controller from changing a Resource. Up until now, the solution to this problem has been time-consuming debugging to find the problem, and waiting until the Pull Request has been merged containing the code to fix the issue. 
 
 
 \subsection{Outline}
-
+With the motivation, problem, and proposed solution discussed, a more in-depth discussion of some low-level components is necessary to obtain a deeper understanding of the inter-workings of how Heimdall will operate.
 
 
 \section{Methodology}
@@ -188,8 +184,7 @@ The chosen methodology for software development teams is paramount for the succe
 
 
 \subsection{Agile}
-"Agile is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches" \cite{what-is-agile}. TODO()
-DISCUSS AGILE + SCRUM
+"Agile is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches" \cite{what-is-agile}. 
 
 
 
@@ -204,7 +199,7 @@ Teams who practice Agile and Scrum methodologies often collect Scrum Artifacts. 
 
 
 \subsection{Version Control}
-What is VCS, Git, GitHub, 
+What is VCS, Git, GitHub 
 
 
 
@@ -226,15 +221,75 @@ Continuous Delivery is an approach
 
 
 
-\section{Technologies} \label{technologies} \hypertarget{technologies}{}
+\section{Technologies} \label{technologies} 
+
 
 
 \subsection{Kubernetes}
 
+Kubernetes is an open-source tool used to implement modern micro-service-based architectures. It can be used to create, manage, and deploy containerized applications and is commonly known as a container orchestrator \cite{k8s-overview}. Containers are small processing units which house applications and their dependencies. They are bundled up into a singular image that is able to run on any hardware. This removes the need for installing required packages when attempting to run an application. Kubernetes orchestrates the deployment of many containers to form larger applications that are highly available, fault-tolerant, and have high degrees of redundancy.
+
+
+
+\subsubsection{Resources} \label{resources}
+
+Resources, also known as objects, are how the state of a Kubernetes cluster is represented. These resources are detailed in \emph{.yaml} format \cite{k8s-obj}. They usually describe the following key pieces of information:
+
+\begin{itemize}
+    \itemsep0em 
+    \item Which container image is being used
+    \item The compute resource available to the application, namely CPU and Memory limits
+    \item Resource policies on how things like fault tolerance, upgrade behaviour, and restart behaviour should operate
+    \item General resource information like the Namespace, Labels, and Annotations
+\end{itemize}
+
+The lowest-level Kubernetes resource is a Pod. Pods house the containers that run applications. They are expendable and can never be edited. If the desired state of a Pod is changed, it is destroyed and recreated to match the Pod's actual state with the new desired state. This also increases the cluster's degree of fault tolerance as if one Pod fails, instead of trying to recover it the Pod can just be deleted and redeployed. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=160mm]{tech/resource-struct.png}
+    \caption{\emph{Kubernetes application Resources: Deployments, Replica Sets, and Pods}}
+    \label{resource-struct}
+\end{figure}
+
+There are two other Resources which make up the structure of a running application in Kubernetes. Figure \ref{resource-struct} \cite{k8s-rolling} details how Deployments and Replica Sets work with Pods in order to complete an application's workflow. Deployments are the top-level Resources in this structure and typically act as the source of truth (desired state) for Pods. If a Deployment's \emph{.yaml} specification is changed, then its Pod's desired state has changed so will be redeployed. The Deployment also acts as a desired state for Replica Sets, which are responsible mainly for managing the number of Pod replicas currently running. \\\par Aside from these core resources, there are also custom resources. These allow for the extension of the Kubernetes API outside of the typically available resource types. They allow for customisation of the typical fields like \emph{.spec} and are generally reconciled (watched and maintained) by custom controllers \cite{cust-res}. 
+
+
+
+\subsubsection{Controllers} \label{controllers}
+
+Since controllers have already been discussed extensively in this report, a brief overview will suffice. Controllers are predominately responsible for watching the actual state of resources and matching it with their desired state. An example would be the Deployment Controller which ships natively on Kubernetes clusters. It ensures that the actual state of all Pods matches their desired state described in its Deployment. Custom Controllers can also perform various different operations including interacting with services outside of a cluster, like sending notifications to a Slack Channel \cite{ctrlrs-ref}. Custom Controllers and Custom Resources packaged up together to create one application are what Kubernetes refer to as the Operator pattern.
+
+
+\subsubsection{Operators}
+
+The core purpose of Operators is to attempt to perform the actions a human operator might. This includes monitoring, managing, and maintaining an application. This is done instead through code where an Operator is installed onto a cluster and will automatically handle any failures, react to changes in the cluster, and carry out actions upon specific events occurring \cite{operator-pattern}. This could be as simple as managing a web server and scaling up the number of web server pods as it gets more traffic to prevent Pod failure.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=160mm]{tech/operator-pattern.png}
+    \caption{\emph{Operator Pattern model of Custom Controller and Resources interaction}}
+    \label{op-pat}
+\end{figure}
+
+Whatever the use case, they serve the purpose of automating tasks outside of what Kubernetes provides out of the box. A model of the Operator pattern taken from the Container Solutions blog can be seen in Figure \ref{op-pat} \cite{op-pat-blog}. In order for Operators to carry out the tasks they need to perform, they need to be granted permission to complete them. 
+
+
+
+\subsubsection{Role-Based Access Control}
+
+Kubernetes environments use a Role-Based Access Control (RBAC) method to allow applications to perform certain tasks. Since the API Server acts as a mediator for all Kubernetes actions, the rules which describe a user's permissions use the verbs common to APIs like \emph{GET}, \emph{POST}, and \emph{DELETE} \cite{rbac}. First, applications (Controllers, Pods, Operators, etc) are assigned a Service Account. Roles can then be created which describes what actions any application assigned with that Role can take. Finally, Bindings can be created to link these Roles to specific Service Accounts. This method of permission granting will likely prove useful for the implementation of the Stretch Goal discussed in Section \ref{stretch-g}.
+
+
+
+
+\subsubsection{Unstructured Package}
+
+Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes in. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
+
 
 
 \section{Tools}
-Minikube, Kubebuilder, Docker, Podman, Git, GitHub, Jira
+Minikube, Operator SDK, Docker, Git, GitHub, Jira, 
 
 
 
@@ -258,22 +313,22 @@ Minikube, Kubebuilder, Docker, Podman, Git, GitHub, Jira
 
 
 
-\subsection{Core Requirements and Stretch Goals}
+\subsection{Core Requirements and Stretch Goals} \label{stretch-g}
 
 
 
 \subsection{User Stories}
-As a Developer, I want to be aware of changes to resources that I own.
-In order to be aware of changes to resources that I own, as a k8s developer, I want to be notified by some channel, such that I don’t have to manually watch resources in a cluster.
-As a Developer, I want to control the cadence of alerts so that I can control noise created from alerts.
-As a Developer, I want to claim ownership of the resources that I control
+As a Developer, I want to be aware of changes to resources that I own so that I can take action if an unwanted change is made.
+As a Developer, I want to control the cadence of alerts so that I can control the noise created by those alerts.
+As a Developer, I want to claim ownership of the resources that I control.
 As a Developer, I want to control the changes to resources that I own.
 
 
 
 \subsection{Personal Stories}
-As a student, I want to have achieved First Class Honors, so that I can reach my academic goals
-As an aspiring Software Engineer, I want to have contributed a solution to a common problem faced by Software Engineers working with Kubernetes, so that I can make a valuable contribution..?? - something like that
+As a student, I want to have achieved First Class Honors, so that I can reach my academic goals.
+
+As an aspiring Software Engineer, I want to contribute a solution to a common problem faced by Software Engineers working with Kubernetes, so that I can make a valuable contribution to the open-source community.
 
 
 
@@ -285,13 +340,14 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
 
 
 
-\section{Prototypes}
+\section{Proof of Concept}
+There are three prototypes necessary for the planning of Heimdall. 
 
+\subsection{Slack Prototype}
 
+\subsection{Watcher Prototype}
 
-\subsection{Proof of Concept}
-
-
+\subsection{Unstructured Prototype} \label{unstructured-poc}
 
 \section{Reflection}
 
@@ -305,13 +361,7 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
 
 
 
-\subsection{Semester 2 Outline}
-
-
-
-\section{Appendices}
-
-
+\subsection{Semester Two Outline}
 
 \bibliographystyle{alpha}
 
@@ -337,14 +387,45 @@ As an aspiring Software Engineer, I want to have contributed a solution to a com
   
 \bibitem[Kubernetes Overview, 2022]{k8s-overview}
 \emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/overview/  
+
 \bibitem[Red Hat Developer, 2020]{rhoam-overview}
-\emph{Red Hat OpenShift API Management}, Red Hat, Dec. 16, 2020. 
-\\URL: https://developers.redhat.com/products/red-hat-openshift-api-management/overview
+\emph{Red Hat OpenShift API Management}, Red Hat, 2020. \\URL: https://developers.redhat.com/products/red-hat-openshift-api-management/overview
+
+\bibitem[K8s Objects, 2022]{k8s-obj}
+\emph{Understanding Kubernetes Objects}, Kubernetes. \\URL: https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
+  
+\bibitem[Y. Maharjan, 2020]{k8s-rolling}
+\emph{How Rolling and Rollback Deployments work in Kubernetes}, Medium, 2020. \\URL: https://yankeexe.medium.com/how-rolling-and-rollback-deployments-work-in-kubernetes-8db4c4dce599 
+
+\bibitem[Custom Resources, 2022]{cust-res}
+\emph{API Extension}, Kubernetes. \\URL: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/ 
+  
+\bibitem[Controllers, 2022]{ctrlrs-ref}
+\emph{Kubernetes Architecture}, Kubernetes. \\URL: https://kubernetes.io/docs/concepts/architecture/controller/ 
+  
+\bibitem[Using RBAC Authorization, 2022]{rbac}
+\emph{API Access Control}, Kubernetes. \\ URL: https://kubernetes.io/docs/reference/access-authn-authz/rbac/  
+
+\bibitem[P. Perzyna, 2020]{op-pat-blog}
+\emph{Kubernetes Operators Explained}, \\URL: https://blog.container-solutions.com/kubernetes-operators-explained
   
 
 
 \end{thebibliography}
 
+\clearpage
+\section*{Appendices}
+\subsubsection*{A Heimdall GitHub Organization} 
+\hypertarget{appendix-a}{https://github.com/heimdall-controller}
+
+\subsubsection*{B Slack Prototype GitHub Repository} 
+\hypertarget{appendix-b}{https://github.com/heimdall-controller/slack-prototype}
+
+\subsubsection*{C Watcher Prototype GitHub Repository} 
+\hypertarget{appendix-c}{https://github.com/heimdall-controller/watcher-prototype}
+
+\subsubsection*{D Unstructured Prototype GitHub Repository} 
+\hypertarget{appendix-d}{https://github.com/heimdall-controller/unstructured-prototype}
 
 
 

@@ -166,19 +166,19 @@ The solution is to create a custom Kubernetes controller which will monitor reso
     \label{solution-model}
 \end{figure}
 
-\hyperlink{solution-model}{Figure \ref{solution-model}} models the proposed solution where the Owner Operator and Rogue Operator are attempting to change a resource's actual state. Once the Owner Operator is installed, it creates the resource with the addition of a label that Heimdall is looking for. Heimdall sees a new resource has been created with this label and begins monitoring its state. The Rogue Operator is installed and begins changing the resource. \\\par The minimum viable product for Heimdall involves the controller watching for non-owners changing the state of a resource. It will then generate an interactive notification for slack with details on the issue to allow the developers to find and fix the problem with relative ease. The stretch goals for Heimdall will involve allowing for an atomic owner of a resource to be set and blocking of changes from non-owners. This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user.
+\hyperlink{solution-model}{Figure \ref{solution-model}} models the proposed solution where the Owner Operator and Rogue Operator are attempting to change a resource's actual state. Once the Owner Operator is installed, it creates the resource with the addition of a label that Heimdall is looking for. Heimdall sees a new resource created with this label and begins monitoring its state. The Rogue Operator is installed and begins changing the resource. \\\par The minimum viable product for Heimdall involves the controller watching for non-owners changing the state of a resource. It will then generate an interactive notification for slack with details on the issue to allow the developers to find and fix the problem with relative ease. The stretch goals for Heimdall will involve allowing for an atomic owner of a resource to be set and blocking changes from non-owners. This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user. These will be discussed further in Section \ref{stretch-g}. 
 
 
 
-\subsection{Risks}
-The stretch goals of this project come with substantial risk. Never before has it been attempted to block an Operator or Controller from changing a Resource. Up until now, the solution to this problem has been time-consuming debugging to find the problem, and waiting until the Pull Request has been merged containing the code to fix the issue. 
+\subsection{Risk Analysis}
 
+Various risks are associated with the implementation of Heimdall, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed further in Sections \ref{mvp} and \ref{stretch-g}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
 
 \subsection{Outline}
-With the motivation, problem, and proposed solution discussed, a more in-depth discussion of some low-level components is necessary to obtain a deeper understanding of the inter-workings of how Heimdall will operate.
+With the motivation, problem, and proposed solution discussed, a more in-depth discussion of some low-level components is necessary to understand the inter-workings of how Heimdall will operate.
 
-
-\section{Methodology}
+ 
+\section{Methodology} \label{methodology}
 The chosen methodology for software development teams is paramount for the successful planning and development of a product. Historically, the Waterfall Methodology was commonplace - but now Agile is the gold standard. Waterfall involved a distinct sequence of actions for engineers to follow. In short, it involved extensive design and planning before ever writing a line of code. Long documents detailing product design and strategy were written to fit the stakeholder's requirements. This proved to be ineffective as in most cases, holes in the design are discovered after beginning the implementation. In recent years, Agile has begun replacing this framework as it has proven much more efficient for software development teams \cite{agile-waterfall}.
 
 
@@ -243,7 +243,7 @@ Resources, also known as objects, are how the state of a Kubernetes cluster is r
     \item General resource information like the Namespace, Labels, and Annotations
 \end{itemize}
 
-The lowest-level Kubernetes resource is a Pod. Pods house the containers that run applications. They are expendable and can never be edited. If the desired state of a Pod is changed, it is destroyed and recreated to match the Pod's actual state with the new desired state. This also increases the cluster's degree of fault tolerance as if one Pod fails, instead of trying to recover it the Pod can just be deleted and redeployed. 
+The lowest-level Kubernetes resource is a Pod. Pods house the containers that run applications. They are expendable and can never be edited. If the desired state of a Pod is changed, it is destroyed and recreated to match the Pod's actual state with the new desired state. This also increases the cluster's degree of fault tolerance as if one Pod fails, instead of trying to recover it the Pod can be deleted and redeployed. 
 
 \begin{figure}[H]
     \centering
@@ -252,13 +252,22 @@ The lowest-level Kubernetes resource is a Pod. Pods house the containers that ru
     \label{resource-struct}
 \end{figure}
 
-There are two other Resources which make up the structure of a running application in Kubernetes. Figure \ref{resource-struct} \cite{k8s-rolling} details how Deployments and Replica Sets work with Pods in order to complete an application's workflow. Deployments are the top-level Resources in this structure and typically act as the source of truth (desired state) for Pods. If a Deployment's \emph{.yaml} specification is changed, then its Pod's desired state has changed so will be redeployed. The Deployment also acts as a desired state for Replica Sets, which are responsible mainly for managing the number of Pod replicas currently running. \\\par Aside from these core resources, there are also custom resources. These allow for the extension of the Kubernetes API outside of the typically available resource types. They allow for customisation of the typical fields like \emph{.spec} and are generally reconciled (watched and maintained) by custom controllers \cite{cust-res}. 
+There are two other Resources which make up the structure of a running application in Kubernetes. Figure \ref{resource-struct} \cite{k8s-rolling} details how Deployments and Replica Sets work with Pods in order to complete an application's workflow. Deployments are the top-level Resources in this structure and typically act as the source of truth (desired state) for Pods. If a Deployment's \emph{.yaml} specification is changed by another Controller, then its Pod's desired state will change and be redeployed. The Deployment also acts as a desired state for Replica Sets, which are responsible mainly for managing the number of Pod replicas currently running. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=125mm]{tech/core-cr.png}
+    \caption{\emph{Example Core Resource (Deployment) comparison with Example Custom Resource}}
+    \label{core-cr}
+\end{figure}
+
+Aside from core resources, there are also custom resources. They extend the Kubernetes API outside of the typically available resource types. They allow for customisation of the typical resource fields like \emph{.spec} and can be reconciled (watched and maintained) by custom controllers \cite{cust-res}. An example \emph{yaml} definition of a Deployment (Core Resource) and a Custom Resource (Slack Custom Resource Example) can be seen in Figure \ref{core-cr} As seen, the Custom Resource (on the right) can have any custom fields in the Resource's \emph{.spec} and the Kind and API Version values are different to that of Core Resources.
 
 
 
 \subsubsection{Controllers} \label{controllers}
 
-Since controllers have already been discussed extensively in this report, a brief overview will suffice. Controllers are predominately responsible for watching the actual state of resources and matching it with their desired state. An example would be the Deployment Controller which ships natively on Kubernetes clusters. It ensures that the actual state of all Pods matches their desired state described in its Deployment. Custom Controllers can also perform various different operations including interacting with services outside of a cluster, like sending notifications to a Slack Channel \cite{ctrlrs-ref}. Custom Controllers and Custom Resources packaged up together to create one application are what Kubernetes refer to as the Operator pattern.
+As already explored in Section \ref{problem-statement}, Controllers are predominately responsible for watching the actual state of resources and matching it with their desired state. An example would be the Deployment Controller which ships natively on Kubernetes clusters. It ensures that the actual state of all Pods matches their desired state described in its Deployment. Custom Controllers can also perform various different operations including interacting with services outside of a cluster, like sending notifications to a Slack Channel \cite{ctrlrs-ref}. Custom Controllers and Custom Resources packaged up together to create one application are what Kubernetes refer to as the Operator pattern.
 
 
 \subsubsection{Operators}
@@ -271,7 +280,7 @@ The core purpose of Operators is to attempt to perform the actions a human opera
     \label{op-pat}
 \end{figure}
 
-Whatever the use case, they serve the purpose of automating tasks outside of what Kubernetes provides out of the box. A model of the Operator pattern taken from the Container Solutions blog can be seen in Figure \ref{op-pat} \cite{op-pat-blog}. In order for Operators to carry out the tasks they need to perform, they need to be granted permission to complete them. 
+Whatever the use case, they serve the purpose of automating tasks beyond what Kubernetes provides out of the box. A model of the Operator pattern taken from the Container Solutions blog can be seen in Figure \ref{op-pat} \cite{op-pat-blog}. In order for Operators to carry out the tasks they need to perform, they need to be granted permission to complete them. 
 
 
 
@@ -284,12 +293,19 @@ Kubernetes environments use a Role-Based Access Control (RBAC) method to allow a
 
 \subsubsection{Unstructured Package}
 
-Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes in. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
+Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label like \emph{heimdall: watching}. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes into play. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
+
+
+
+
+\subsection{Languages}
+\subsubsection{GoLang}
+\subsubsection{yaml}
 
 
 
 \section{Tools}
-Minikube, Operator SDK, Docker, Git, GitHub, Jira, 
+Minikube, Operator SDK, Docker, Git, GitHub, Jira, Slack Client, Golang, GitHub Actions, Overleaf
 
 
 
@@ -298,6 +314,13 @@ Minikube, Operator SDK, Docker, Git, GitHub, Jira,
 
 
 \subsection{System Architecture Overview}
+Create a diagram
+
+
+\subsection{Minimum Viable Product} \label{mvp}
+
+
+\subsection{Stretch Goals} \label{stretch-g}
 
 
 
@@ -305,15 +328,15 @@ Minikube, Operator SDK, Docker, Git, GitHub, Jira,
 
 
 
-\subsection{Functional Requirements}
+\subsubsection{Functional Requirements}
+What the project actually does
+From a devs POV
 
 
 
-\subsection{Non Functional Requirements}
+\subsubsection{Non Functional Requirements}
+Under the hood what I need to get working. Security
 
-
-
-\subsection{Core Requirements and Stretch Goals} \label{stretch-g}
 
 
 

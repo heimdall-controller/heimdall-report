@@ -174,8 +174,6 @@ The solution is to create a custom Kubernetes controller which will monitor reso
 
 Various risks are associated with the implementation of Heimdall, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed further in Sections \ref{mvp} and \ref{stretch-g}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
 
-\subsection{Outline}
-With the motivation, problem, and proposed solution discussed, a more in-depth discussion of some low-level components is necessary to understand the inter-workings of how Heimdall will operate.
 
  
 \section{Methodology} \label{methodology}
@@ -296,24 +294,40 @@ Kubernetes environments use a Role-Based Access Control (RBAC) method to allow a
 Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label like \emph{heimdall: watching}. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes into play. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
 
 
+\subsection{Go}
+\subsubsection{Slack Client}
 
+\subsection{YAML}
 
-\subsection{Languages}
-\subsubsection{GoLang}
-\subsubsection{yaml}
 
 
 
 \section{Tools}
-Minikube, Operator SDK, Docker, Git, GitHub, Jira, Slack Client, Golang, GitHub Actions, Overleaf
+
+\subsection{Operator SDK}
+\subsection{Minikube}
+\subsection{Docker}
+\subsection{GitHub Actions}
+\subsection{Version Control}
+\subsection{Jira}
+\subsection{Overleaf}
 
 
 
 \section{Design}
 
 
-
+\newpage
 \subsection{System Architecture Overview}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=160mm]{design/arch-diag.png}
+    \caption{\emph{Heimdall system architecture overview model}}
+    \label{arch-diag}
+\end{figure}
+
+
 Create a diagram
 
 

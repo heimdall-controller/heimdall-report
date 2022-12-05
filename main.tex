@@ -311,12 +311,30 @@ The Slack Client for Go (slack-go) allows interaction with Slack channels via co
 \subsubsection{Unstructured Package}
 
 Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label like \emph{heimdall: watching}. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes into play. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
+
+
+
 \section{Tools}
 
+Various tools will be used during the development of Heimdall
+
 \subsection{Overleaf}
-Overleaf is 
+
+Overleaf is an online LaTeX editor and is the tool used to create this report. It will also be the tool used to create the Semester Two report. LaTeX allows the creation of professionally formatted documents using plain text instead of formatted text as typically done with other document writing tools like Google Docs and Microsoft Word \cite{overleaf}.
 
 \subsection{Operator SDK} \label{osdk}
+
+Operator SDK is a Software Development Kit created for building Kubernetes Operators. It provides the necessary tools for the creation of custom Controllers and Resources (custom APIs) and generates a plethora of scaffolding code to get started on an Operator project \cite{osdk-overview}. During this scaffolding process, as seen in Figure \ref{osdk-img}, it can be specified whether or not to generate a Controller and Custom API. In the case of Heimdall, a Custom Resource is not needed so the flag to generate one is left to false.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=160mm]{tools/osdk.png}
+    \caption{\emph{Operator SDK Controller scaffolding via Command Line}}
+    \label{osdk-img}
+\end{figure}
+
+Aside from code generation, Operator SDK also initialises the use of essential libraries like \emph{controller-runtime} and \emph{controller-tools}. These are sets of libraries that aid in the creation of custom Controllers and will be used extensively during the development of Heimdall.
+
 \subsection{Minikube}
 \subsection{Docker}
 \subsection{GitHub Actions}
@@ -460,6 +478,19 @@ There are three prototypes necessary for the planning of Heimdall.
   
 \bibitem[Go Docs, 2022]{go-dev}
 \emph{The Go Programming Language}, \\URL: https://go.dev/
+
+\bibitem[Understanding Automation, 2021]{yaml-blog}
+\emph{What is YAML?}, Red Hat. \\URL: https://www.redhat.com/en/topics/automation/what-is-yaml
+
+\bibitem[Overleaf About Us, 2022]{overleaf}
+\emph{About us}, Overleaf, Online LaTeX Editor. \\URL: https://www.overleaf.com/about 
+
+\bibitem[Operator SDK Overview, 2022]{osdk-overview}
+\emph{Operator SDK Documentation},\\ URL: https://sdk.operatorframework.io/docs/overview/
+
+\bibitem[Minikube Docs, 2022]{minikube-docs}
+\emph{Minikube}, \\URL: https://minikube.sigs.k8s.io/docs/
+  
 
 \bibitem[Understanding Automation, 2021]{yaml-blog}
 \emph{What is YAML?}, Red Hat. \\URL: https://www.redhat.com/en/topics/automation/what-is-yaml

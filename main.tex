@@ -181,7 +181,7 @@ The chosen methodology for software development teams is paramount for the succe
 
 
 
-\subsection{Agile}
+\subsection{Agile} \label{agile}
 "Agile is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches" \cite{what-is-agile}. 
 
 
@@ -191,22 +191,22 @@ Scrum has three main roles: Scrum Master, the Product Owner, and the Development
 
 
 
-\subsection{Scrum Artifacts}
+\subsection{Scrum Artifacts} \label{artifacts}
 Teams who practice Agile and Scrum methodologies often collect Scrum Artifacts. These are pieces of information that a product's stakeholders and the team developing it use to describe its development. The main Scrum Artifacts used for this project include Product Backlog Refinement, Sprint Planning, and Sprint Reviews. There are also various Extended Artifacts that are not included in the official Scrum Artifacts definition. These include reporting mechanisms like Burn down Charts.
 
 
 
-\subsection{Version Control}
+\subsection{Version Control} \label{version-ctrl}
 What is VCS, Git, GitHub 
 
 
 
-\subsection{Continuous Integration}
+\subsection{Continuous Integration} \label{ci}
 Version control lies at the heart of Continuous Integration. CI is an Agile practice of integrating code changes to a product automatically from various contributors (product teams and open-source community contributions). It is a method used to consistently merge code changes into one central repository which runs automated tests and builds to ensure code functionality and integrity.   
 
 
-
-\subsection{Continuous Delivery}
+ 
+\subsection{Continuous Delivery} \label{cd}
 Continuous Delivery is an approach 
 
 
@@ -215,7 +215,7 @@ Continuous Delivery is an approach
 
 
 
-\subsection{Open Source}
+\subsection{Open Source} \label{open-source}
 
 
 
@@ -311,17 +311,62 @@ The Slack Client for Go (slack-go) allows interaction with Slack channels via co
 \subsubsection{Unstructured Package}
 
 Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label like \emph{heimdall: watching}. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes into play. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
+
+
+
 \section{Tools}
 
+Various tools will be used during the development of Heimdall...
+
 \subsection{Overleaf}
-Overleaf is 
+
+Overleaf is an online LaTeX editor and is the tool used to create this report. It will also be the tool used to create the Semester Two report. LaTeX allows the creation of professionally formatted documents using plain text instead of formatted text as typically done with other document writing tools like Google Docs and Microsoft Word \cite{overleaf}.
+
 
 \subsection{Operator SDK} \label{osdk}
+
+Operator SDK is a Software Development Kit created for building Kubernetes Operators. It provides the necessary tools for the creation of custom Controllers and Resources (custom APIs) and generates a plethora of scaffolding code to get started on an Operator project \cite{osdk-overview}. During this scaffolding process, as seen in Figure \ref{osdk-img}, it can be specified whether or not to generate a Controller and Custom API. In the case of Heimdall, a Custom Resource is not needed so the flag to generate one is left to false.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=160mm]{tools/osdk.png}
+    \caption{\emph{Operator SDK Controller scaffolding via Command Line}}
+    \label{osdk-img}
+\end{figure}
+
+Aside from code generation, Operator SDK also initialises the use of essential libraries like \emph{controller-runtime} and \emph{controller-tools}. These are sets of libraries that aid in the creation of custom Controllers and will be used extensively during the development of Heimdall.
+
+
 \subsection{Minikube}
+
+Minikube is a small open-source Kubernetes environment that uses one node (a virtual machine that Kubernetes runs on). It can be run locally and is typically used for the development of Kubernetes applications \cite{minikube-docs}. Minikube provides a dashboard which allows the use of a graphical user interface to configure the Kubernetes cluster and interact with resources. This will be the environment in which Heimdall will be tested. 
+
+ 
 \subsection{Docker}
-\subsection{GitHub Actions}
-\subsection{Version Control}
+
+Docker is an open-source tool for developing, deploying and shipping containerized applications. Kubernetes uses Docker as its container runtime tool (to run containers) so it plays a large part in a Kubernetes environment \cite{docker-overview}. For Heimdall, it will be used to build and push  custom images of Heimdall so that they can be deployed to any Kubernetes environment. This process of pushing images will also be integral to the release process of Heimdall discussed in Section \ref{ci}. An alternative to Docker for this purpose is Podman. Podman is another open-source tool created by Red Hat for the same purpose. I have had previous experience with both, but I chose Docker as it is more commonly used so I would like to improve my skills with that during Heimdall's development. Since the two tools are very similar with the commands mostly being identical, any development of skill with Docker will transfer to Podman as well.
+
+
+\subsection{Kubectl}
+
+Kubectl is a command line tool used to interact with Kubernetes clusters. Using Kubectl allows a developer to interact directly with the Kubernetes API Server to make changes to Resources in a cluster \cite{k8s-tools}.
+
+
+
+\subsection{Git and GitHub}
+
+Git and GitHub are integral tools to implement a viable version control system as discussed in Section \ref{version-ctrl}. Git is the command line tool used to track changes to a code base while GitHub is the cloud-based platform that hosts repositories (projects) for tracking those changes. Git and GitHub are being utilized to implement the version control system for the Heimdall Controller, the report, and the prototypes. All of these repositories are stored in a GitHub Organization as discussed in Section \ref{open-source} in order to separate them from personal projects. Git and GitHub will be used to work on multiple different Heimdall features at once, track changes so they can be reverted if a bug is introduced, and host the Continuous Integration and Continuous Delivery systems via GitHub Actions as discussed in Sections \ref{ci}, \ref{cd}, and \ref{gha}
+
+
+\subsection{GitHub Actions} \label{gha}
+
+GitHub Actions provides a Continuous Integration and Continuous Delivery system for the automation of building, testing, and deploying software products. GitHub Action Workflows can be triggered upon a particular event like a push to the \emph{master} branch. Once triggered, it can perform actions like ensuring the project builds correctly, checking code formatting standards are met, and running tests. They can also be used to automate product releases \cite{github-actions}. This tool is already being utilized to build the LaTeX document on every Pull Request event and Push event for the Heimdall Report repository as seen in Appendix \hyperlink{appendix-e}{E}. This implementation provides a familiarity with GitHub Actions in preparation for Semester Two, while also ensuring the report is building successfully whenever changes are made.
+
+
+
 \subsection{Jira}
+
+Lastly, Jira is a tool which can be used by teams who adopt the Agile methodology discussed in Section \ref{agile}. It belongs to the Atlassian software set and provides templates for Scrum and Kanban boards for project management. Jira is the tool of choice for tracking pieces of work for this project. Originally, Trello was being used for this purpose. Trello is lightweight and easy to use but does not provide many of the features that come with Jira. The Burndown charts discussed in Section \ref{artifacts} are not possible to generate out-of-the-box with Trello and are only available through paid extensions while they are free with Jira. Other useful features like Sprint management, release creation, and automatic linking of GitHub Pull Requests to Jira Tasks made Jira the more favourable option.
 
 
 
@@ -463,6 +508,24 @@ There are three prototypes necessary for the planning of Heimdall.
 
 \bibitem[Understanding Automation, 2021]{yaml-blog}
 \emph{What is YAML?}, Red Hat. \\URL: https://www.redhat.com/en/topics/automation/what-is-yaml
+
+\bibitem[Overleaf About Us, 2022]{overleaf}
+\emph{About us}, Overleaf, Online LaTeX Editor. \\URL: https://www.overleaf.com/about 
+
+\bibitem[Operator SDK Overview, 2022]{osdk-overview}
+\emph{Operator SDK Documentation},\\ URL: https://sdk.operatorframework.io/docs/overview/
+
+\bibitem[Minikube Docs, 2022]{minikube-docs}
+\emph{Minikube}, \\URL: https://minikube.sigs.k8s.io/docs/
+
+\bibitem[Docker Overview, 2022]{docker-overview}
+\emph{Docker Documentation}, 2022. \\URL: https://docs.docker.com/get-started/overview/
+  
+\bibitem[Kubernetes Tools]{k8s-tools}
+\emph{Install Tools}, Kubernetes. \\URL: https://kubernetes.io/docs/tasks/tools/kubectl
+
+\bibitem[Learn GitHub Actions, 2022]{github-actions}
+\emph{Understanding GitHub Actions}, GitHub Docs. \\URL: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
   
 
 \end{thebibliography}
@@ -481,6 +544,8 @@ There are three prototypes necessary for the planning of Heimdall.
 \subsubsection*{D Unstructured Prototype GitHub Repository} 
 \hypertarget{appendix-d}{https://github.com/heimdall-controller/unstructured-prototype}
 
+\subsubsection*{E Heimdall Report GitHub Repository} \label{appendix-e}
+\hypertarget{appendix-e}{https://github.com/heimdall-controller/heimdall-report}
 
 
 \end{document}

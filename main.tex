@@ -166,13 +166,109 @@ The solution is to create a custom Kubernetes controller which will monitor reso
     \label{solution-model}
 \end{figure}
 
-\hyperlink{solution-model}{Figure \ref{solution-model}} models the proposed solution where the Owner Operator and Rogue Operator are attempting to change a resource's actual state. Once the Owner Operator is installed, it creates the resource with the addition of a label that Heimdall is looking for. Heimdall sees a new resource created with this label and begins monitoring its state. The Rogue Operator is installed and begins changing the resource. \\\par The minimum viable product for Heimdall involves the controller watching for non-owners changing the state of a resource. It will then generate an interactive notification for slack with details on the issue to allow the developers to find and fix the problem with relative ease. The stretch goals for Heimdall will involve allowing for an atomic owner of a resource to be set and blocking changes from non-owners. This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user. These will be discussed further in Section \ref{stretch-g}. 
+\hyperlink{solution-model}{Figure \ref{solution-model}} models the proposed solution where the Owner Operator and Rogue Operator are attempting to change a resource's actual state. Once the Owner Operator is installed, it creates the resource with the addition of a label that Heimdall is looking for. Heimdall sees a new resource created with this label and begins monitoring its state. The Rogue Operator is installed and begins changing the resource. \\\par The minimum viable product for Heimdall involves the controller watching for non-owners changing the state of a resource. It will then generate an interactive notification for slack with details on the issue to allow the developers to find and fix the problem with relative ease. The stretch goals for Heimdall will achieve the following:
+\begin{enumerate}
+    \itemsep0em 
+    \item Allow for an atomic owner of a resource to be set.
+    \item Block changes to resources from non-owners.
+\end{enumerate}
+
+This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user. These will be discussed further in Section \ref{stretch-g}. 
 
 
+
+
+
+
+\newpage
+
+\section{Design}
+
+\subsection{System Architecture Overview}
+
+An overview model of Heimdall can be seen in Figure \ref{arch-diag}. This model represents how Heimdall will function when the minimum viable product and stretch goals are implemented successfully. It includes what happens with the Controller itself, and puts the actions in context with the example scenario seen underneath. A more in-depth description of Heimdall is discussed in Section \ref{design-desc}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=160mm]{design/arch-diag.png}
+    \caption{\emph{Heimdall system architecture overview model}}
+    \label{arch-diag}
+\end{figure}
+
+
+
+\subsection{Requirements}
+
+There are various requirements for the successful implementation of Heimdall. These fit into functional (end-user-facing features) and non-functional (under-the-hood features). 
+
+
+\subsubsection{Functional Requirements}
+
+Functional Requirements define how a product should operate from the perspective of the user. In this case, this is predominately a developer implementing Heimdall into the environment they manage. This could also be a Site Reliability Engineer (Engineer who manages customer's environments) installing Heimdall onto a customer Kubernetes cluster. Heimdall's Functional Requirements are as follows:
+\begin{enumerate}
+    \itemsep0em 
+    \item Heimdall must be installable onto any Kubernetes environment.
+    \item It must be possible to configure Heimdall to connect to Slack for notifications.
+    \item Heimdall must be able to block changes to resources from unwanted Operators. 
+    \item The correct configuration and use of Heimdall must be well documented.
+\end{enumerate}
+
+
+
+\subsubsection{Non-Functional Requirements}
+
+Non-Functional Requirements define how a product should work under the hood. These relate to technical aspects which need to be implemented in order to have a product work as intended. For Heimdall, they are any pieces of work which need to be completed so that the Functional Requirements are successfully implemented. Heimdall's Non-Functional Requirements are as follows:
+\begin{enumerate}
+    \itemsep0em 
+    \item Heimdall must use the Unstructured Package to watch Resources of any type. These could be Core Resources or Custom Resources.
+    \item Events on the watched Resource should trigger a Reconcile for that Resource.
+    \item When Heimdall reconciles a Resource, it must verify if events are coming from the owner Operator or not.
+    \item If the event is coming from a non-owner, Heimdall must configure a new Role and Role Binding to assign the correct permissions to that Operator's Service Account.
+    \item The Controller must also reconcile two things for Slack integration:
+        \subitem a. A Config Map storing the Slack channel information that Heimdall sends notifications to.
+        \subitem b. A Secret storing Slack API Key that Heimdall will use to send Slack messages.
+    \item Heimdall must utilize the Slack Go Client to send messages to a Slack Channel using the information stored in the Config Map and Secret.
+    \item These messages must be interactive, providing a link to the affected Resource. 
+    \item Lastly, Heimdall must have a working and publicly available Docker image built to be used for installation.
+\end{enumerate}
+
+\subsection{System Design} \label{design-desc}
+
+The low-level design of Heimdall can be broken down into different sections to better explain how the system will work.
+
+\subsubsection{Controller Overview}
+
+The Controller is the centre-piece of Heimdall. It is what makes this entire project work and will house the majority of the code. As most Kubernetes Controllers do, Heimdall's Controller will have two main functions at the very least. The first of which is the \emph{Add} function. This will initialize the Controller itself using the \emph{controller-runtime} package, which is discussed in Section \ref{osdk}, and will utilize the Unstructured Package to set a Watch on specific Resources. Once a Watch is set on a Resource, this triggers the second main function \emph{Reconcile}. This function will house a lot of the logic carried out by Heimdall. When an event occurs on a Watched Resources, the Reconcile function will carry out the logic to identify whether the change came from the owner or a rogue Operator. If the event came from a rogue Operator, it will then trigger two main pieces of code: the Slack Notification and the reconfiguration of Role Based Access Control Resources to block any future changes to that Resource from that Operator.
+
+\subsubsection{Unstructured Package Implementation}
+
+As part of the Heimdall Controller, the Unstructured package must be used in order to Watch Resources of any type in a Kubernetes cluster. This package provides a means by which to convert any type of Object in a Kubernetes cluster and turn it into a generic type. This will allow Heimdall to not have to declare the resource type when setting a Watch on Resources, so it can essentially Watch any resource in a cluster. This is especially helpful for Custom Resources as Heimdall needs to be installed and configured to work with any Kubernetes environment, so it needs to be dynamic in the way that it deals with Resources of different types.
+
+\subsubsection{Slack Integration}
+
+The integration with Slack involves a few different steps. The main components are the Config Map, the Secret, and the Slack Go client. Heimdall will first need to Reconcile the Config Map and the Secret. If either of them does not already exist in the cluster, the Controller will create them. This is so both Resources are guaranteed to be present on the cluster and ready for the Developer to configure them. Once they are configured correctly with the Slack API Token and the Slack Channel name, Heimdall can use that information to send Slack messages. The messages sent will need to be somewhat interactive. Ideally, this would include a link to the affected Resource, but at the very least it should contain the Name and Namespace of the Resource, the event type, and the source of the unwanted changes.
+
+\subsubsection{Role Based Access Control} \label{security}
+
+Upon a watched Resource being changed by a non-owner, Heimdall will detect that change and trigger the Reconcile function for that Resource. To stop any new changes from being made by that Operator, the Controller must create new RBAC Resources like Roles and Role Bindings. The Roles will be bound to the Operator's Service Account with new Role Bindings so that when that Operator attempts to make another change to the watched Resource, it won't have the correct permissions. This functionality is subject to change as it has not yet been attempted and is not confirmed to be possible in a production environment. Upon actually implementing this functionality, it may differ slightly from this design.
+
+
+\subsubsection{Installation}
+
+Lastly, Heimdall needs to be installable via a public Docker image. An image can be built and pushed to a public container image repository like Docker Hub or Quay. This image can then be used by any developer that needs to implement Heimdall into their environment and run on the cluster. Appropriate documentation will need to exist so that the installation and configuration are easy to complete. This documentation should also include steps to create a Slack API for the developer's Slack Channel, and how to configure the Config Map and Secret correctly.
+
+
+
+\subsection{User Stories}
+As a Developer, I want to be aware of changes to resources that I own so that I can take action if an unwanted change is made.
+As a Developer, I want to control the cadence of alerts so that I can control the noise created by those alerts.
+As a Developer, I want to claim ownership of the resources that I control.
+As a Developer, I want to control the changes to resources that I own.
 
 \subsection{Risk Analysis}
 
-Various risks are associated with the implementation of Heimdall, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed further in Sections \ref{mvp} and \ref{stretch-g}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
+There are a number of risks associated with this project's implementation, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed further in Sections \ref{mvp} and \ref{stretch-g}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
+
 
 
  
@@ -259,7 +355,7 @@ There are two other Resources which make up the structure of a running applicati
     \label{core-cr}
 \end{figure}
 
-Aside from core resources, there are also custom resources. They extend the Kubernetes API outside of the typically available resource types. They allow for customisation of the typical resource fields like \emph{.spec} and can be reconciled (watched and maintained) by custom controllers \cite{cust-res}. An example \emph{yaml} definition of a Deployment (Core Resource) and a Custom Resource (Slack Custom Resource Example) can be seen in Figure \ref{core-cr} As seen, the Custom Resource (on the right) can have any custom fields in the Resource's \emph{.spec} and the Kind and API Version values are different to that of Core Resources.
+Additionally, there are Custom Resources. They extend the Kubernetes API outside of the typically available resource types. They allow for customisation of the typical resource fields like \emph{.spec} and can be reconciled (watched and maintained) by custom controllers \cite{cust-res}. An example \emph{yaml} definition of a Deployment (Core Resource) and a Custom Resource (Slack Custom Resource Example) can be seen in Figure \ref{core-cr}. As seen, the Custom Resource (on the right) can have any custom fields in the Resource's \emph{.spec} and the Kind and API Version values are different to that of Core Resources.
 
 
 
@@ -278,7 +374,7 @@ The core purpose of Operators is to attempt to perform the actions a human opera
     \label{op-pat}
 \end{figure}
 
-Whatever the use case, they serve the purpose of automating tasks beyond what Kubernetes provides out of the box. A model of the Operator pattern taken from the Container Solutions blog can be seen in Figure \ref{op-pat} \cite{op-pat-blog}. In order for Operators to carry out the tasks they need to perform, they need to be granted permission to complete them. 
+Whatever the use case, they serve the purpose of automating tasks beyond what Kubernetes provides out of the box. A model of the Operator pattern taken from the Container Solutions blog can be seen in Figure \ref{op-pat} \cite{op-pat-blog}. In order for Operators to carry out their intended functions, they need to be granted the necessary permissions.
 
 
 
@@ -297,7 +393,7 @@ The Go Programming Language is an open-source language created by Google. It is 
 
 \subsubsection{YAML}
 
-YAML is a language highly similar to JSON. It is used frequently for defining configurations and is syntactically easy to use. Similarly to Go, I have encountered and written YAML at Red Hat, and will be looking to further develop my skills with it during the creation of Heimdall. YAML is the language which defines the desired and actual state of Resources in Kubernetes as discussed in Section \ref{resources} \cite{yaml-blog}. 
+YAML is a language highly similar to JSON. It is used frequently for defining configurations and is syntactically easy to use \cite{yaml-blog}. Similarly to Go, I have encountered and written YAML at Red Hat, and will be looking to further develop my skills with it during the creation of Heimdall. YAML is the language which defines the desired and actual state of Resources in Kubernetes as discussed in Section \ref{resources}. 
 
 \subsection{Libraries}
 
@@ -344,7 +440,7 @@ Minikube is a small open-source Kubernetes environment that uses one node (a vir
  
 \subsection{Docker}
 
-Docker is an open-source tool for developing, deploying and shipping containerized applications. Kubernetes uses Docker as its container runtime tool (to run containers) so it plays a large part in a Kubernetes environment \cite{docker-overview}. For Heimdall, it will be used to build and push  custom images of Heimdall so that they can be deployed to any Kubernetes environment. This process of pushing images will also be integral to the release process of Heimdall discussed in Section \ref{ci}. An alternative to Docker for this purpose is Podman. Podman is another open-source tool created by Red Hat for the same purpose. I have had previous experience with both, but I chose Docker as it is more commonly used so I would like to improve my skills with that during Heimdall's development. Since the two tools are very similar with the commands mostly being identical, any development of skill with Docker will transfer to Podman as well.
+Docker is an open-source tool for developing, deploying and shipping containerized applications. Kubernetes uses Docker as its container runtime tool (to run containers) so it plays a large part in a Kubernetes environment \cite{docker-overview}. For Heimdall, it will be used to build and push  custom images of Heimdall so that they can be deployed to any Kubernetes environment. This process of pushing images will also be integral to the release process of Heimdall as discussed in Section \ref{ci}. An alternative to Docker for this purpose is Podman. Podman is another open-source tool created by Red Hat for the same purpose. I have had previous experience with both, but I chose Docker as it is more commonly used so I would like to improve my skills with that during Heimdall's development. Since the two tools are very similar with the commands mostly being identical, any development of skill with Docker will transfer to Podman as well.
 
 
 \subsection{Kubectl}
@@ -370,78 +466,8 @@ Lastly, Jira is a tool which can be used by teams who adopt the Agile methodolog
 
 
 
-\section{Design}
 
 
-\newpage
-\subsection{System Architecture Overview}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=160mm]{design/arch-diag.png}
-    \caption{\emph{Heimdall system architecture overview model}}
-    \label{arch-diag}
-\end{figure}
-
-
-Create a diagram
-
-
-\subsection{Minimum Viable Product} \label{mvp}
-
-
-\subsection{Stretch Goals} \label{stretch-g}
-
-\subsection{Security Considerations} \label{security}
-
-
-\subsection{Requirements}
-
-
-
-\subsubsection{Functional Requirements}
-What the project actually does
-From a devs POV
-
-
-
-\subsubsection{Non Functional Requirements}
-Under the hood what I need to get working. Security
-
-
-
-
-\subsection{User Stories}
-As a Developer, I want to be aware of changes to resources that I own so that I can take action if an unwanted change is made.
-As a Developer, I want to control the cadence of alerts so that I can control the noise created by those alerts.
-As a Developer, I want to claim ownership of the resources that I control.
-As a Developer, I want to control the changes to resources that I own.
-
-
-
-\subsection{Personal Stories}
-As a student, I want to have achieved First Class Honors, so that I can reach my academic goals.
-
-As an aspiring Software Engineer, I want to contribute a solution to a common problem faced by Software Engineers working with Kubernetes, so that I can make a valuable contribution to the open-source community.
-
-
-
-\subsection{User Definitions}
-
-
-
-\subsection{Models}
-
-
-
-\section{Proof of Concept}
-There are three prototypes necessary for the planning of Heimdall. 
-
-\subsection{Slack Prototype} \label{slack-poc}
-
-\subsection{Watcher Prototype} \label{watcher-poc}
-
-\subsection{Unstructured Prototype} \label{unstructured-poc}
 
 \section{Reflection}
 

@@ -78,8 +78,6 @@
 \listoffigures
 \newpage
 
-\listoftables
-\newpage
 
 
 
@@ -176,17 +174,54 @@ The solution is to create a custom Kubernetes controller which will monitor reso
 This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user. These will be discussed further in Section \ref{stretch-g}. 
 
 
-
-
-
-
 \newpage
 
 \section{Design}
 
-\subsection{System Architecture Overview}
+This section will begin by outlining the functional and non-functional requirements that the controller must fulfil in order to be effective, including the ability to install on any Kubernetes environment, connect to Slack for notifications, block changes to resources from unwanted operators, and provide supporting documentation. Next, an overview of the architecture of Heimdall will be presented to give a deeper understanding of how the technical components of the Controller will operate. Lastly, each aspect of the project will be discussed in depth in order to fully understand the project and its components.
 
-An overview model of Heimdall can be seen in Figure \ref{arch-diag}. This model represents how Heimdall will function when the minimum viable product and stretch goals are implemented successfully. It includes what happens with the Controller itself, and puts the actions in context with the example scenario seen underneath. A more in-depth description of Heimdall is discussed in Section \ref{design-desc}.
+
+\subsection{Requirements} \label{requirements}
+
+There are various requirements for the successful implementation of Heimdall. These requirements can be divided into two categories: functional requirements and non-functional requirements. Functional requirements describe the specific capabilities or features that the system must have, while non-functional requirements describe constraints that the system must adhere to \cite{func-vs-nonfunc}. It is important to carefully define both types in order to ensure that Heimdall meets the needs of its users and operates in a reliable manner. These will serve as a guide for the design and development of the Controller and will help to ensure that it is able to effectively detect and resolve conflicting Resource changes between Operators in a Kubernetes cluster.
+
+
+\subsubsection{Functional Requirements}
+
+Functional requirements are features and capabilities that the system must possess in order to meet the needs and expectations of the user. In the case of Heimdall, these requirements are primarily focused on the functionality that will be most useful to developers implementing the controller into their environments, as well as site reliability engineers installing it onto customer Kubernetes clusters. Heimdall's Functional Requirements are as follows:
+
+\begin{enumerate}
+    \itemsep0em
+    \item Developers must be able to install the controller on any Kubernetes cluster.
+    \item Developers must be able to configure the controller to connect to Slack for notifications.
+    \item Developers must be able to define an Operator that is unable to make changes to the specified Resource.
+    \item Developers must have access to appropriate documentation which outlines the proper configuration and use of Heimdall.
+\end{enumerate}
+
+With the functional requirements outlined, the following section will delve into the technical details necessary for the successful implementation of these end-user features.
+
+\subsubsection{Non-Functional Requirements}
+
+Non-Functional Requirements are technical specifications that help ensure that the system meets the desired functional requirements. They define the performance, reliability, security, and other characteristics that the system must possess in order to function effectively. Heimdall's Non-Functional Requirements are as follows:
+\begin{enumerate}
+    \itemsep0em
+    \item Heimdall must be able to use the Unstructured Package to watch Resources of any type, including Core and Custom Resources.
+    \item When a Resource is watched, events on it should trigger a Reconcile for that Resource.
+    \item During a Reconcile, Heimdall must verify if events are coming from the owner Operator or not.
+    \item If the event is coming from a non-owner, Heimdall must configure a new Role and Role Binding to grant the correct permissions to that Operator's Service Account.
+    \item The Controller must also handle the reconciliation of the Slack integration, including:
+    \subitem a. A Config Map storing the Slack channel information that Heimdall sends notifications to.
+    \subitem b. A Secret storing the Slack API Key that Heimdall uses to send Slack messages.
+    \item Heimdall must use the Slack Go Client to send messages to a Slack Channel with information from the Config Map and Secret.
+    \item These messages must be interactive and provide a link to the affected Resource.
+    \item Finally, Heimdall must have a working and publicly available Docker image built for installation.
+\end{enumerate}
+
+These requirements provide the foundation for the design of the system, as they outline the necessary capabilities and technical considerations that must be taken into account. In the following section, we will delve deeper into the architecture of Heimdall and discuss how these requirements will be implemented and integrated into the overall design of the system.
+
+\subsection{Architecture Model}
+
+The design of Heimdall is illustrated in Figure \ref{arch-diag}, which shows how the controller will function when the minimum viable product and stretch goals are implemented. This figure includes the responsibilities of the Controller in the context of an example scenario and details the various moving parts involved in the implementation. In the following section, we will delve deeper into the specific components and processes of Heimdall, providing a more detailed understanding of how the controller functions and achieves its functional and non-functional requirements.
 
 \begin{figure}[H]
     \centering
@@ -196,45 +231,9 @@ An overview model of Heimdall can be seen in Figure \ref{arch-diag}. This model 
 \end{figure}
 
 
-
-\subsection{Requirements}
-
-There are various requirements for the successful implementation of Heimdall. These fit into functional (end-user-facing features) and non-functional (under-the-hood features). 
-
-
-\subsubsection{Functional Requirements}
-
-Functional Requirements define how a product should operate from the perspective of the user. In this case, this is predominately a developer implementing Heimdall into the environment they manage. This could also be a Site Reliability Engineer (Engineer who manages customer's environments) installing Heimdall onto a customer Kubernetes cluster. Heimdall's Functional Requirements are as follows:
-\begin{enumerate}
-    \itemsep0em 
-    \item Heimdall must be installable onto any Kubernetes environment.
-    \item It must be possible to configure Heimdall to connect to Slack for notifications.
-    \item Heimdall must be able to block changes to resources from unwanted Operators. 
-    \item The correct configuration and use of Heimdall must be well documented.
-\end{enumerate}
-
-
-
-\subsubsection{Non-Functional Requirements}
-
-Non-Functional Requirements define how a product should work under the hood. These relate to technical aspects which need to be implemented in order to have a product work as intended. For Heimdall, they are any pieces of work which need to be completed so that the Functional Requirements are successfully implemented. Heimdall's Non-Functional Requirements are as follows:
-\begin{enumerate}
-    \itemsep0em 
-    \item Heimdall must use the Unstructured Package to watch Resources of any type. These could be Core Resources or Custom Resources.
-    \item Events on the watched Resource should trigger a Reconcile for that Resource.
-    \item When Heimdall reconciles a Resource, it must verify if events are coming from the owner Operator or not.
-    \item If the event is coming from a non-owner, Heimdall must configure a new Role and Role Binding to assign the correct permissions to that Operator's Service Account.
-    \item The Controller must also reconcile two things for Slack integration:
-        \subitem a. A Config Map storing the Slack channel information that Heimdall sends notifications to.
-        \subitem b. A Secret storing Slack API Key that Heimdall will use to send Slack messages.
-    \item Heimdall must utilize the Slack Go Client to send messages to a Slack Channel using the information stored in the Config Map and Secret.
-    \item These messages must be interactive, providing a link to the affected Resource. 
-    \item Lastly, Heimdall must have a working and publicly available Docker image built to be used for installation.
-\end{enumerate}
-
 \subsection{System Design} \label{design-desc}
 
-The low-level design of Heimdall can be broken down into different sections to better explain how the system will work.
+The system design aims to provide a detailed description of the various components involved in the implementation of Heimdall. This section will cover the Controller Overview, the use of the Unstructured Package, Slack Integration, Role Based Access Control, and Installation. 
 
 \subsubsection{Controller Overview}
 
@@ -260,10 +259,18 @@ Lastly, Heimdall needs to be installable via a public Docker image. An image can
 
 
 \subsection{User Stories}
-As a Developer, I want to be aware of changes to resources that I own so that I can take action if an unwanted change is made.
-As a Developer, I want to control the cadence of alerts so that I can control the noise created by those alerts.
-As a Developer, I want to claim ownership of the resources that I control.
-As a Developer, I want to control the changes to resources that I own.
+
+User stories are a way of expressing requirements for a product in a way that is easily understood by a product's stakeholders. They are used in Agile development, as discussed in Section \ref{agile}, and are an important tool for creating a shared understanding of the desired functionality of a product \cite{user-stories}. User stories help to focus on the value that a feature will provide to the end user and provide a framework for refining its requirements. The following are Heimdall's user stories:
+
+\begin{itemize}
+    \itemsep0em
+    \item As a Developer, I want to be aware of changes to resources that I own so that I can take action if an unwanted change is made.
+    \item As a Developer, I want to control the cadence of alerts so that I can control the noise created by those alerts.
+    \item As a Developer, I want to claim ownership of the resources that I control.
+    \item As a Developer, I want to control the changes to resources that I own.
+\end{itemize}
+
+These provide clear and concise descriptions of the desired functionality of Heimdall and will serve as a guide for the development team next semester.
 
 \subsection{Risk Analysis}
 
@@ -273,18 +280,15 @@ There are a number of risks associated with this project's implementation, one o
 
  
 \section{Methodology} \label{methodology}
-The chosen methodology for software development teams is paramount for the successful planning and development of a product. Historically, the Waterfall Methodology was commonplace - but now Agile is the gold standard. Waterfall involved a distinct sequence of actions for engineers to follow. In short, it involved extensive design and planning before ever writing a line of code. Long documents detailing product design and strategy were written to fit the stakeholder's requirements. This proved to be ineffective as in most cases, holes in the design are discovered after beginning the implementation. In recent years, Agile has begun replacing this framework as it has proven much more efficient for software development teams \cite{agile-waterfall}.
+
+The chosen methodology for the development of a product has great importance as it determines the processes and techniques used to ensure the successful delivery of the final product. This section will outline the Agile methodology that has been adopted for the development of Heimdall, as well as the Scrum roles and artifacts that have been utilized. A discussion of the version control, continuous integration, and continuous delivery practices that will be implemented to ensure the smooth and efficient development of the project. Additionally, we will delve into the testing approach taken and the decision to open-source the project.
+
+The chosen methodology for the development of a product has great importance.  \cite{agile-waterfall}.
 
 
 
 \subsection{Agile} \label{agile}
-"Agile is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches" \cite{what-is-agile}. 
-
-
-
-\subsection{Scrum Roles}
-Scrum has three main roles: Scrum Master, the Product Owner, and the Development Team. These are used to help describe the responsibilities of each stakeholder for a product.
-
+Agile is a project management and development method that helps teams deliver value faster and more efficiently \cite{what-is-agile}. 
 
 
 \subsection{Scrum Artifacts} \label{artifacts}
@@ -412,7 +416,8 @@ Section \ref{controllers} detailed how Controllers can watch specific resources 
 
 \section{Tools}
 
-Various tools will be used during the development of Heimdall...
+The following section will provide an overview of the various tools that will be used throughout the development of Heimdall. These tools are essential for the development of the Controller, the report, and the prototypes. From online LaTeX editors to command line tools for interacting with Kubernetes clusters, these tools will be integral to the success of the project. The section will also provide a brief overview of the purpose and use of each tool, as well as any relevant background information.
+
 
 \subsection{Overleaf}
 
@@ -552,7 +557,14 @@ Lastly, Jira is a tool which can be used by teams who adopt the Agile methodolog
 
 \bibitem[Learn GitHub Actions, 2022]{github-actions}
 \emph{Understanding GitHub Actions}, GitHub Docs. \\URL: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
+
+\bibitem[P. Gorbachenko, 2021]{func-vs-nonfunc}
+\emph{Functional vs Non-Functional Requirements}, Enkonix. \\URL: https://enkonix.com/blog/functional-requirements-vs-non-functional/
+
+\bibitem[Agile Alliance, 2015]{user-stories}
+\emph{Agile Alliance}, Dec. 17, 2015. \\URL: https://www.agilealliance.org/glossary/user-stories/
   
+
 
 \end{thebibliography}
 

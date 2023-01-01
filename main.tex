@@ -82,14 +82,11 @@
 
 
 \section{Plagiarism Declaration}
-I declare that this material, which I now submit for assessment, is entirely my own work and has not been taken from the work of others, save and to the extent that such work has been cited and acknowledged within the text of my work. I understand that plagiarism, collusion, and copying are grave and severe offences in the university and accept the penalties that would be imposed should I engage in plagiarism, collusion or copying. I have read and understood the Assignment Regulations. I have identified and included the source of all other facts, ideas, opinions, and viewpoints in the assignment references. Direct quotations from books, journal articles, internet sources, module text, or any other source are acknowledged and the source cited are identified in the bibliography. This assignment, or any part of it, has not been previously submitted by me or any other person for assessment on this or any other course of study.  
-
-
+I affirm that the work I am submitting is entirely my own and has not been taken from any other source, except where properly cited. I understand that plagiarism, collusion, and copying are serious offenses that can result in academic penalties. I have read and understood the assignment regulations and have properly cited all sources of information in my work. This assignment has not been previously submitted by me or anyone else for assessment on this or any other course.
 
 \newpage
 \section{Acknowledgements}
-I would like to express my deepest appreciation to my Mentors Ciaran Roche and Laura Fitzgerald who provided invaluable experience and contributions to this project. I would also like to extend my deepest gratitude to my Project Supervisor Lucy white for guiding and encouraging me throughout the process.
-
+I would like to express my sincerest gratitude to my mentors, Ciaran Roche and Laura Fitzgerald, for their invaluable guidance and support throughout this project. Their expertise and knowledge have been integral to the success of this project, and I am deeply grateful for the opportunity to work with them. I would also like to extend my heartfelt thanks to my project supervisor, Lucy White, for her unwavering support and encouragement during this semester. Her guidance and assistance have been invaluable, and I am deeply appreciative of all that she has done to help me along the way. 
 
 
 \newpage
@@ -171,19 +168,19 @@ The solution is to create a custom Kubernetes controller which will monitor reso
     \item Block changes to resources from non-owners.
 \end{enumerate}
 
-This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user. These will be discussed further in Section \ref{stretch-g}. 
+This will not only allow the developer to fix the problem with ease but also stop the issue from occurring and prevent any downtime for the end user.
 
 
 \newpage
 
 \section{Design}
 
-This section will begin by outlining the functional and non-functional requirements that the controller must fulfil in order to be effective, including the ability to install on any Kubernetes environment, connect to Slack for notifications, block changes to resources from unwanted operators, and provide supporting documentation. Next, an overview of the architecture of Heimdall will be presented to give a deeper understanding of how the technical components of the Controller will operate. Lastly, each aspect of the project will be discussed in depth in order to fully understand the project and its components.
+This section will provide an overview of the Heimdall controller, including its architecture and technical components. It will also delve into the details of each aspect of the project to give a full understanding of its function and purpose.
 
 
 \subsection{Requirements} \label{requirements}
 
-There are various requirements for the successful implementation of Heimdall. These requirements can be divided into two categories: functional requirements and non-functional requirements. Functional requirements describe the specific capabilities or features that the system must have, while non-functional requirements describe constraints that the system must adhere to \cite{func-vs-nonfunc}. It is important to carefully define both types in order to ensure that Heimdall meets the needs of its users and operates in a reliable manner. These will serve as a guide for the design and development of the Controller and will help to ensure that it is able to effectively detect and resolve conflicting Resource changes between Operators in a Kubernetes cluster.
+There are various requirements for the successful implementation of Heimdall. These requirements can be divided into two categories: functional requirements and non-functional requirements. Functional requirements describe the specific capabilities or features that the system must have, while non-functional requirements describe constraints that the system must adhere to \cite{func-vs-nonfunc}. It is important to carefully define both types in order to ensure that Heimdall meets the needs of its users and operates in a reliable manner. These will serve as a guide for the development of the Controller and will help to ensure that it is able to effectively detect and resolve conflicting Resource changes between Operators in a Kubernetes cluster.
 
 
 \subsubsection{Functional Requirements}
@@ -221,7 +218,7 @@ These requirements provide the foundation for the design of the system, as they 
 
 \subsection{Architecture Model}
 
-The design of Heimdall is illustrated in Figure \ref{arch-diag}, which shows how the controller will function when the minimum viable product and stretch goals are implemented. This figure includes the responsibilities of the Controller in the context of an example scenario and details the various moving parts involved in the implementation. In the following section, we will delve deeper into the specific components and processes of Heimdall, providing a more detailed understanding of how the controller functions and achieves its functional and non-functional requirements.
+The design of Heimdall is shown in Figure \ref{arch-diag}, which illustrates the controller's functions and responsibilities in an example scenario. In the following section, we will explore the components and processes of Heimdall in more detail to understand how the controller functions and meets its requirements.
 
 \begin{figure}[H]
     \centering
@@ -237,7 +234,7 @@ The system design aims to provide a detailed description of the various componen
 
 \subsubsection{Controller Overview}
 
-The Controller is the centre-piece of Heimdall. It is what makes this entire project work and will house the majority of the code. As most Kubernetes Controllers do, Heimdall's Controller will have two main functions at the very least. The first of which is the \emph{Add} function. This will initialize the Controller itself using the \emph{controller-runtime} package, which is discussed in Section \ref{osdk}, and will utilize the Unstructured Package to set a Watch on specific Resources. Once a Watch is set on a Resource, this triggers the second main function \emph{Reconcile}. This function will house a lot of the logic carried out by Heimdall. When an event occurs on a Watched Resources, the Reconcile function will carry out the logic to identify whether the change came from the owner or a rogue Operator. If the event came from a rogue Operator, it will then trigger two main pieces of code: the Slack Notification and the reconfiguration of Role Based Access Control Resources to block any future changes to that Resource from that Operator.
+The Controller is the main component of Heimdall. It initializes using the \emph{controller-runtime} package, which is discussed in Section \ref{osdk}, and sets a Watch on specific Resources using the Unstructured Package. When an event occurs on a Watched Resource, the Reconcile function carries out the logic to identify whether the change came from the owner or a rogue Operator. If it is a rogue Operator, it will trigger a Slack Notification and reconfigure Role-Based Access Control Resources to block any future changes from that Operator.
 
 \subsubsection{Unstructured Package Implementation}
 
@@ -274,9 +271,9 @@ These provide clear and concise descriptions of the desired functionality of Hei
 
 \subsection{Risk Analysis}
 
-There are a number of risks associated with this project's implementation, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed briefly in Section \ref{aims-and-obj}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
+There are a number of risks associated with this project's implementation, one of which is far more significant than the others. During initial research, there were no examples or previous attempts found to implement such a solution, posing a significant risk that it may not be technically possible. To mitigate this, the project has been split into a Minimum Viable Product (MVP) and stretch goals. If the MVP can still be completed, it will still provide a valid solution. If the implementation is confirmed to be possible, the next risk is that the project cannot be completed within the given time constraint. However, with the use of the methodologies discussed in Section \ref{methodology}, the use of Sprints, and using CI/CD for development should mitigate any concerns about time. After completing the RBAC Prototype seen in Section \ref{rbac-prototype}, it is likely that the Stretch Goals will be feasible in some form.
 
- 
+
 \section{Methodology} \label{methodology}
 
 This section will outline the Agile methodology that has been adopted for the development of Heimdall, as well as the version control, continuous integration, and continuous delivery practices that will be implemented to ensure the smooth development of the project. Additionally, we will delve into the testing approach taken and the decision to open-source the project.
@@ -284,45 +281,76 @@ This section will outline the Agile methodology that has been adopted for the de
 
 \subsection{Agile and Scrum} \label{agile}
 
-Agile is a project management and development method that helps teams deliver value to customers more efficiently. It is based on the idea of continuously iterating on and improving a product through the collaboration of various teams \cite{what-is-agile}. Agile has been chosen because it allows for a more iterative and flexible approach to development. By focusing on delivering the most important features first, there is a higher probability of being able to successfully implement the minimum viable product as well as the stretch goals. \\\par Scrum on the other hand is a framework for Agile development that emphasizes collaboration, flexibility, and the ability to respond to change. One way that Agile teams track progress is through the use of Scrum artifacts such as burndown charts. While the Scrum roles of Scrum Master, Product Owner, and Development Team may not be applicable to a one-developer project like Heimdall, the use of these artifacts will still be useful in monitoring progress and ensuring that the project stays on track.
+Agile is a project management and development method that helps teams deliver value to customers more efficiently. It is based on the idea of continuously iterating on and improving a product through the collaboration of teams \cite{what-is-agile}. Agile has been chosen because it allows for a more flexible approach to development. By focusing on delivering the most important features first, there is a higher probability of being able to successfully implement the MVP and Stretch Goals. \\\par Scrum on the other hand is a framework for Agile development that emphasizes collaboration, flexibility, and the ability to respond to change. One way that Agile teams track progress is through the use of Scrum artifacts such as Burn-down charts and Velocity Reports. While the Scrum roles may not be applicable to a one-developer project like Heimdall, the use of these artifacts will still be useful in monitoring progress and ensuring that the project stays on track.
 
 
 \subsection{Scrum Artifacts} \label{artifacts}
-Teams who practice Agile and Scrum methodologies often collect Scrum Artifacts. These are pieces of information that a product's stakeholders and the team developing it use to describe its development. The main Scrum Artifacts used for this project include Product Backlog Refinement, Sprint Planning, and Sprint Reviews. There are also various Extended Artifacts that are not included in the official Scrum Artifacts definition. These include reporting mechanisms like Burn down Charts.
 
+Scrum Artifacts are essential tools for Agile teams. They provide a way to track and communicate the progress of a product. During this project, several Scrum Artifacts including Backlog Refinement and Sprint Reviews were used. These artefacts helped to plan and execute work effectively. The use of these artefacts can aid in the improvement of a developer and should showcase the development of skills as time goes on.
+
+\subsubsection{Sprints, Sprint Reviews, and Backlog Refinements}
+
+The management of work for Heimdall was initially conducted through weekly Sprints. However, in order to more effectively track progress and allow for regular meetings with the Supervisor, the decision was made to switch to bi-weekly Sprints. This allowed the meeting at the end of each Sprint to serve as a Sprint Review, which is a regular meeting that allows teams to review progress and make adjustments \cite{scrum-guides}. The meeting during the Sprint served as Backlog Refinement, which is an ongoing activity in which teams discuss tickets in order to improve accuracy \cite{scrum-guides}. The bi-weekly Sprints allowed for constant progress tracking and the ability to make necessary adjustments as needed. A Sprint Review document was kept as a log of the weekly Sprints and Sprint Reviews, which can be seen in Appendix \hyperlink{appendix-f}{F}.
+
+
+\subsubsection{Burn-down Charts} \label{bdc}
+Burn-down charts are a chart of the remaining story points for a sprint. The goal for these charts is a steady downward trend throughout the sprint ending with little to no story points left. The burn-down chart for the first two Sprints (week one and two) can be seen in Figure \ref{s1ands2bd}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=120mm]{methodology/s1and2bd.png}
+    \caption{\emph{Sprint 1 and 2 Burndown Chart}}
+    \label{s1ands2bd}
+\end{figure}
+
+
+Comparing charts can be a useful way to track progress and improvement over time. For the first two Sprints, the estimation for the number of story points that could be completed was too high, and only about half of the estimated work was actually finished. In contrast, in the Burn-down chart for the most recent Sprint in Figure \ref{s7bd}, the estimation for the number of story points that could be completed was higher than in the first Sprints, and all of the estimated work was completed. This indicates an improvement in both estimation and rate of work completion. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=120mm]{methodology/s7bd.png}
+    \caption{\emph{Sprint 7 Burndown Chart}}
+    \label{s7bd}
+\end{figure}
+
+While Sprint 7 is near the end of the Semester, so it should be assumed that all story points were completed, ideally next semester each sprint will reflect a more accurate estimation similar to Sprint 7's.
+
+\subsubsection{Velocity Report}
+
+Velocity Reports help predict future workload by tracking work completed in previous sprints. The report in Figure \ref{velocity} shows the number of story points completed in each sprint. By analyzing this data, adjustments can be made to improve estimation accuracy and increase productivity. This can be useful for planning future sprints, including those in the next semester.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=120mm]{methodology/velocity.png}
+    \caption{\emph{Sprint Velocity Report}}
+    \label{velocity}
+\end{figure}
 
 
 \subsection{Version Control} \label{version-ctrl}
-What is VCS, Git, GitHub 
+Version Control is a method in which changes to files are recorded over time so they can be reverted or referenced if needed. It is typically used in software development to track changes to source code. In this project, Git and GitHub are used for version control. Further details can be found in Section \ref{gha}. Heimdall's code is stored in a GitHub organization seen in Appendix \hyperlink{appendix-a}{A} to mimic how real products in companies are managed on GitHub. Every piece of work is merged as a pull request, which allows for review and checking before merging, allowing for easy reverting in case of any issues that may arise after a commit.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=120mm]{methodology/github.png}
+    \caption{\emph{Heimdall Report GitHub Repository}}
+    \label{github}
+\end{figure}
 
 
 
-\subsection{Continuous Integration} \label{ci}
-Version control lies at the heart of Continuous Integration. CI is an Agile practice of integrating code changes to a product automatically from various contributors (product teams and open-source community contributions). It is a method used to consistently merge code changes into one central repository which runs automated tests and builds to ensure code functionality and integrity.   
+\subsection{CI/CD} \label{cicd}
 
-
- 
-\subsection{Continuous Delivery} \label{cd}
-Continuous Delivery is an approach 
-
-
-
-\subsection{Testing Approach}
-
-
-
-\subsection{Open Source} \label{open-source}
-
+Continuous Integration and Continuous Delivery (CI/CD) are two key practices that are essential for the efficient development and delivery of a product. CI refers to the practice of regularly integrating code changes into a repository, while CD refers to the practice of automatically building, testing, and releasing code changes \cite{ci-cd}. Together, these practices help ensure that code can be quickly and easily tested, validated, and deployed to production environments. To streamline development and deploy updates to Heimdall efficiently, CI/CD practices are being implemented. This includes automating testing and building with GitHub Actions, with plans to also use it for releases. By automating these processes, delivering new functionality and completing the MVP and Stretch Goals should be unproblematic.
 
 
 \section{Technologies} \label{technologies} 
 
-
+The selection of technologies for a project plays a crucial role in determining its success. It is important to carefully consider the capabilities and limitations of various technologies, as well as how they will integrate with one another, in order to build a solution that meets the project's needs. The following is an extensive list of the technologies chosen to implement Heimdall, each one carefully selected to best fit the needs of the project.
 
 \subsection{Kubernetes}
 
 Kubernetes is an open-source tool used to implement modern micro-service-based architectures. It can be used to create, manage, and deploy containerized applications and is commonly known as a container orchestrator \cite{k8s-overview}. Containers are small processing units which house applications and their dependencies. They are bundled up into a singular image that is able to run on any hardware. This removes the need for installing required packages when attempting to run an application. Kubernetes orchestrates the deployment of many containers to form larger applications that are highly available, fault-tolerant, and have high degrees of redundancy.
-
 
 
 \subsubsection{Resources} \label{resources}
@@ -380,7 +408,7 @@ Whatever the use case, they serve the purpose of automating tasks beyond what Ku
 
 \subsubsection{Role-Based Access Control}
 
-Kubernetes environments use a Role-Based Access Control (RBAC) method to allow applications to perform certain tasks. Since the API Server acts as a mediator for all Kubernetes actions, the rules which describe a user's permissions use the verbs common to APIs like \emph{GET}, \emph{POST}, and \emph{DELETE} \cite{rbac}. First, applications (Controllers, Pods, Operators, etc) are assigned a Service Account. Roles can then be created which describes what actions any application assigned with that Role can take. Finally, Bindings can be created to link these Roles to specific Service Accounts. This method of permission granting will likely prove useful for the implementation of the Stretch Goal discussed in Section \ref{stretch-g}. These resources are discussed in context in Section \ref{security}.
+Kubernetes environments use a Role-Based Access Control (RBAC) method to allow applications to perform certain tasks. Since the API Server acts as a mediator for all Kubernetes actions, the rules which describe a user's permissions use the verbs common to APIs like \emph{GET}, \emph{POST}, and \emph{DELETE} \cite{rbac}. First, applications (Controllers, Pods, Operators, etc) are assigned a Service Account. Roles can then be created which describe what actions any application assigned with that Role can take. Finally, Bindings can be created to link these Roles to specific Service Accounts. This method of permission granting will prove useful for the implementation of the Stretch Goal discussed in Section \ref{aims-and-obj}. These resources are discussed as part of a prototype Section \ref{rbac-prototype}.
 
 
 
@@ -397,23 +425,20 @@ YAML is a language highly similar to JSON. It is used frequently for defining co
 
 \subsection{Libraries}
 
-Various libraries will be used for the development of Heimdall. Many of these are packaged up in the Software Development Kit discussed in Section \ref{osdk}. 
+Various libraries will be used for the development of Heimdall. Many of these are packaged up in the Software Development Kit discussed in Section \ref{osdk} so don't require discussion here. 
 
 
 \subsubsection{Slack Go Client}
 
-The Slack Client for Go (slack-go) allows interaction with Slack channels via code. This client will allow Heimdall to make a connection to a Slack Channel, and send custom notifications containing key information about the problem occurring. This client will be used in the Slack Prototype discussed in Section \ref{slack-poc}.
+The Slack Client for Go (slack-go) allows interaction with Slack channels via code. This client will allow Heimdall to make a connection to a Slack Channel, and send custom notifications containing key information about the problem occurring. This client will be used in the Slack Prototype discussed in Section \ref{slack-watch-prototype}.
 
 \subsubsection{Unstructured Package}
 
-Section \ref{controllers} detailed how Controllers can watch specific resources for events. Controllers can be configured to watch Resources which contain a specific label like \emph{heimdall: watching}. This is useful as it means a Controller can watch and perform actions on any Resource which can be dynamically configured. An issue arises when we consider the Resource kind the Controller is being told to watch. If a Controller is set to watch a specific Resource, it requires a Kind to be specified, which could be \emph{Pod}, \emph{Deployment}, etc. What if the Controller is configured to only watch Pods with a specific label but then that label is added to a custom resource which does not contain the kind \emph{Pod}. This is where the Unstructured Package comes into play. This package allows for a Controller to watch and interact with Resources of any Kind. This will be integral to the implementation of Heimdall as the Controller will need to complete its task on any Resource in a cluster regardless of its Kind. This is discussed further in the final proof of concept in Section \ref{unstructured-poc}.
-
-
+The Unstructured Package allows a Controller to watch and interact with any Kind of Resource. This is necessary for Heimdall as it needs to complete its tasks on any Resource in a cluster, regardless of Kind. This is achieved by setting a Watch on Resources with a specific label, such as \emph{heimdall: watching}. However, if a Controller is only set to watch a specific Kind, like \emph{Pod}, it will not be able to perform actions on Resources with that label if they do not also have the Kind \emph{Pod}. The Unstructured Package allows Heimdall to overcome this limitation and watch any Resource with the desired label.
 
 \section{Tools}
 
-The following section will provide an overview of the various tools that will be used throughout the development of Heimdall. These tools are essential for the development of the Controller, the report, and the prototypes. From online LaTeX editors to command line tools for interacting with Kubernetes clusters, these tools will be integral to the success of the project. The section will also provide a brief overview of the purpose and use of each tool, as well as any relevant background information.
-
+The following section will provide an overview of the various tools used in the development of Heimdall, including online LaTeX editors and command line tools for interacting with Kubernetes clusters. It will also briefly describe the purpose and use of each tool and provide relevant background information.
 
 \subsection{Overleaf}
 
@@ -441,18 +466,16 @@ Minikube is a small open-source Kubernetes environment that uses one node (a vir
  
 \subsection{Docker}
 
-Docker is an open-source tool for developing, deploying and shipping containerized applications. Kubernetes uses Docker as its container runtime tool (to run containers) so it plays a large part in a Kubernetes environment \cite{docker-overview}. For Heimdall, it will be used to build and push  custom images of Heimdall so that they can be deployed to any Kubernetes environment. This process of pushing images will also be integral to the release process of Heimdall as discussed in Section \ref{ci}. An alternative to Docker for this purpose is Podman. Podman is another open-source tool created by Red Hat for the same purpose. I have had previous experience with both, but I chose Docker as it is more commonly used so I would like to improve my skills with that during Heimdall's development. Since the two tools are very similar with the commands mostly being identical, any development of skill with Docker will transfer to Podman as well.
-
+Docker is an open-source tool for deploying and shipping containerized applications that is commonly used in Kubernetes environments \cite{docker-overview}. For Heimdall, it will be used to build and push custom images for deployment to any Kubernetes environment. Docker will also be used in the release process of Heimdall as discussed in Section \ref{cicd}. Podman, another open-source tool created by Red Hat, can also be used for these purposes, but I have chosen to focus on improving my skills with Docker during Heimdall's development. Since the tools are largely very similar, skills with Docker are transferable to Podman.
 
 \subsection{Kubectl}
 
-Kubectl is a command line tool used to interact with Kubernetes clusters. Using Kubectl allows a developer to interact directly with the Kubernetes API Server to make changes to Resources in a cluster \cite{k8s-tools}.
-
+Kubectl is a powerful command line tool used to interact with and manage Kubernetes clusters \cite{k8s-tools}. In the context of Heimdall, it will be used to deploy and manage the controller and other components in the cluster. It can also be used to troubleshoot and debug issues that may arise during development and deployment.
 
 
 \subsection{Git and GitHub}
 
-Git and GitHub are integral tools to implement a viable version control system as discussed in Section \ref{version-ctrl}. Git is the command line tool used to track changes to a code base while GitHub is the cloud-based platform that hosts repositories (projects) for tracking those changes. Git and GitHub are being utilized to implement the version control system for the Heimdall Controller, the report, and the prototypes. All of these repositories are stored in a GitHub Organization as discussed in Section \ref{open-source} in order to separate them from personal projects. Git and GitHub will be used to work on multiple different Heimdall features at once, track changes so they can be reverted if a bug is introduced, and host the Continuous Integration and Continuous Delivery systems via GitHub Actions as discussed in Sections \ref{ci}, \ref{cd}, and \ref{gha}
+Git and GitHub are integral tools to implement a viable version control system as discussed in Section \ref{version-ctrl}. Git is the command line tool used to track changes to a code base while GitHub is the cloud-based platform that hosts repositories (projects) for tracking those changes. Git and GitHub are being utilized to implement the version control system for the Heimdall Controller, the report, and the prototypes. All of these repositories are stored in a GitHub Organization as discussed in Section \ref{open-source} in order to separate them from personal projects. Git and GitHub will be used to work on multiple different Heimdall features at once, track changes so they can be reverted if a bug is introduced, and host the Continuous Integration and Continuous Delivery systems via GitHub Actions as discussed in Sections \ref{cicd} and \ref{gha}
 
 
 \subsection{GitHub Actions} \label{gha}
@@ -462,13 +485,13 @@ GitHub Actions provides a Continuous Integration and Continuous Delivery system 
 
 \subsection{Jira}
 
-Lastly, Jira is a tool which can be used by teams who adopt the Agile methodology discussed in Section \ref{agile}. It belongs to the Atlassian software set and provides templates for Scrum and Kanban boards for project management. Jira is the tool of choice for tracking pieces of work for this project. Originally, Trello was being used for this purpose. Trello is lightweight and easy to use but does not provide many of the features that come with Jira. The Burndown charts discussed in Section \ref{artifacts} are not possible to generate out-of-the-box with Trello and are only available through paid extensions while they are free with Jira. Other useful features like Sprint management, release creation, and automatic linking of GitHub Pull Requests to Jira Tasks made Jira the more favourable option.
+Jira is a tool used by teams who follow the Agile methodology, as discussed in Section \ref{agile}. It provides templates for Scrum and Kanban boards for project management and is used to track pieces of work for this project. It offers features such as Sprint management, release creation, and automatic linking of GitHub Pull Requests to Jira Tasks. It was chosen over Trello due to these additional features, such as the ability to generate Burndown charts, which are not available in Trello without paid extensions.
 
 \section{Proof of Concept}
 
 Three prototypes were created to demonstrate the feasibility and functionality of the different components of Heimdall. This section will provide a brief discussion of each prototype's capabilities. While the creation process will not be detailed here, this information can be seen in each respective repository as seen in the GitHub Organization in Appendix \hyperlink{appendix-a}{A} and a supporting video demonstration can be viewed in Appendix \hyperlink{appendix-d}{D}.
 
-\subsection{Slack and Watcher Prototypes}
+\subsection{Slack and Watcher Prototypes} \label{slack-watch-prototype}
 
 The Slack prototype is designed to send notifications to a Slack channel based on events occurring within a Kubernetes cluster, specifically Pod events. This demonstrates the possibility of out-of-cluster reactions to in-cluster events. The watcher prototype, on the other hand, demonstrates how a controller can watch specific resources such as Pods within a cluster and perform an action based on a specific event occurring to that resource. By merging these two prototypes together, it is possible to better demonstrate the potential capabilities of Heimdall and make the demonstration more effective. The combined functionality allows for external responses to be triggered by specific events occurring within the cluster, providing greater control and visibility into cluster activity.
 
@@ -483,7 +506,7 @@ The Slack prototype is designed to send notifications to a Slack channel based o
 Figure \ref{slack-notif} shows an example notification being sent to a Slack channel called \emph{\#heimdall}. This Pod is identified by a specific label, such as \emph{heimdall: watching}, and is watched by the Controller. When an event occurs on that Pod, the Controller extracts the Slack API Key from a Kubernetes secret stored in-cluster and sends a Slack notification to the configured Slack channel.
 
 
-\subsection{RBAC Prototype}
+\subsection{RBAC Prototype} \label{rbac-prototype}
 
 The RBAC Prototype demonstrates how to create and configure RBAC resources within a cluster through Controller code. As part of this prototype, an example operator called the \emph{changer-operator} was set up to continuously change the label of a Pod. The RBAC Prototype itself serves the function of creating Roles and Role bindings to reconfigure the permissions that the changer-operator possesses. The Controller logs of the creation of these Resources can be seen in Figure \ref{rbac-output}.
 
@@ -497,14 +520,9 @@ The RBAC Prototype demonstrates how to create and configure RBAC resources withi
 
 This prototype serves to demonstrate that the permissions of an operator can be altered from a completely unrelated controller. This proves that Heimdall should, in some form, be able to alter an operator's RBAC configuration so that it is allowed or not allowed to make changes to a specific resource. While there will be many other factors in play during Heimdall's full implementation, this prototype serves as proof of feasibility that re-configuring the RBAC resources could be a possible method for accomplishing this task.
 
-\section{Summary}
+\section{Conclusion}
+Overall, it has been a fantastic opportunity to learn about the process of developing a product in an Agile environment, and I'm excited to have the chance to contribute a real open-source solution to a problem commonly experienced in the industry. Working with mentors from Red Hat and my supervisor was a huge help throughout the semester, and I'm grateful for the guidance and support they provided. Looking ahead to next semester, I'm eager to get straight into the development of Heimdall and tackle the various challenges that lie ahead. My plan is to start by integrating a better version of the Slack prototype, and then focus on integrating the unstructured package so that it can be used with any resource kind. From there, I will turn my attention to dynamically re-configuring operator permissions and identifying the source of events on a resource. \\\par The process of learning how to manage a product's development was both challenging and rewarding. Working in an Agile way was an interesting experience, and it was gratifying to see how my understanding and use of Agile principles improved over the course of the semester. The creation of prototypes was especially challenging, as it required me to think creatively and carefully consider the needs of the final solution. However, this process was also productive, as it helped me to better understand the requirements and constraints of Heimdall and to identify the best approach for addressing the problem. With this knowledge and experience, I am excited to continue the development of Heimdall and bring it to fruition as a valuable open-source solution for the industry.
 
-
-\subsection{Review}
-
-
-
-\subsection{Semester Two Outline}
 
 \bibliographystyle{alpha}
 
@@ -514,72 +532,76 @@ This prototype serves to demonstrate that the permissions of an operator can be 
 
 
 \bibitem[What is Agile?, 2022]{what-is-agile}
-\emph{Atlassian}, \\URL: https://www.atlassian.com/agile 
+\emph{Atlassian}, \\Available at: https://www.atlassian.com/agile 
 
 \bibitem[Operator Pattern, 2022]{operator-pattern}
-\emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
+\emph{Kubernetes}, \\Available at: https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
 
 \bibitem[IBM API-Connect, 2022]{understanding-apis}
-\emph{Understanding rate limits for APIs and Plans}, \\URL: https://www.ibm.com/docs/en/api-connect/10.0.1.x?topic=connect-understanding-rate-limits-apis-plans
+\emph{Understanding rate limits for APIs and Plans}, \\Available at: https://www.ibm.com/docs/en/api-connect/10.0.1.x?topic=connect-understanding-rate-limits-apis-plans
 
 \bibitem[I. Sommerville, 2021]{agile-book}
 \emph{Engineering Software Products: An Introduction to Modern Software Engineering}, 2021.
   
 \bibitem[Kubernetes Overview, 2022]{k8s-overview}
-\emph{Kubernetes}, \\URL: https://kubernetes.io/docs/concepts/overview/  
+\emph{Kubernetes}, \\Available at: https://kubernetes.io/docs/concepts/overview/  
 
 \bibitem[Red Hat Developer, 2020]{rhoam-overview}
-\emph{Red Hat OpenShift API Management}, Red Hat, 2020. \\URL: https://developers.redhat.com/products/red-hat-openshift-api-management/overview
+\emph{Red Hat OpenShift API Management}, Red Hat, 2020. \\Available at: https://developers.redhat.com/products/red-hat-openshift-api-management/overview
 
 \bibitem[K8s Objects, 2022]{k8s-obj}
-\emph{Understanding Kubernetes Objects}, Kubernetes. \\URL: https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
+\emph{Understanding Kubernetes Objects}, Kubernetes. \\Available at: https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/
   
 \bibitem[Y. Maharjan, 2020]{k8s-rolling}
-\emph{How Rolling and Rollback Deployments work in Kubernetes}, Medium, 2020. \\URL: https://yankeexe.medium.com/how-rolling-and-rollback-deployments-work-in-kubernetes-8db4c4dce599 
+\emph{How Rolling and Rollback Deployments work in Kubernetes}, Medium, 2020. \\Available at: https://yankeexe.medium.com/how-rolling-and-rollback-deployments-work-in-kubernetes-8db4c4dce599 
 
 \bibitem[Custom Resources, 2022]{cust-res}
-\emph{API Extension}, Kubernetes. \\URL: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/ 
+\emph{API Extension}, Kubernetes. \\Available at: https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/ 
   
 \bibitem[Controllers, 2022]{ctrlrs-ref}
-\emph{Kubernetes Architecture}, Kubernetes. \\URL: https://kubernetes.io/docs/concepts/architecture/controller/ 
+\emph{Kubernetes Architecture}, Kubernetes. \\Available at: https://kubernetes.io/docs/concepts/architecture/controller/ 
   
 \bibitem[Using RBAC Authorization, 2022]{rbac}
-\emph{API Access Control}, Kubernetes. \\ URL: https://kubernetes.io/docs/reference/access-authn-authz/rbac/  
+\emph{API Access Control}, Kubernetes. \\ Available at: https://kubernetes.io/docs/reference/access-authn-authz/rbac/  
 
 \bibitem[P. Perzyna, 2020]{op-pat-blog}
-\emph{Kubernetes Operators Explained}, \\URL: https://blog.container-solutions.com/kubernetes-operators-explained
+\emph{Kubernetes Operators Explained}, \\Available at: https://blog.container-solutions.com/kubernetes-operators-explained
   
 \bibitem[Go Docs, 2022]{go-dev}
-\emph{The Go Programming Language}, \\URL: https://go.dev/
+\emph{The Go Programming Language}, \\Available at: https://go.dev/
 
 \bibitem[Understanding Automation, 2021]{yaml-blog}
-\emph{What is YAML?}, Red Hat. \\URL: https://www.redhat.com/en/topics/automation/what-is-yaml
+\emph{What is YAML?}, Red Hat. \\Available at: https://www.redhat.com/en/topics/automation/what-is-yaml
 
 \bibitem[Overleaf About Us, 2022]{overleaf}
-\emph{About us}, Overleaf, Online LaTeX Editor. \\URL: https://www.overleaf.com/about 
+\emph{About us}, Overleaf, Online LaTeX Editor. \\Available at: https://www.overleaf.com/about 
 
 \bibitem[Operator SDK Overview, 2022]{osdk-overview}
-\emph{Operator SDK Documentation},\\ URL: https://sdk.operatorframework.io/docs/overview/
+\emph{Operator SDK Documentation},\\ Available at: https://sdk.operatorframework.io/docs/overview/
 
 \bibitem[Minikube Docs, 2022]{minikube-docs}
-\emph{Minikube}, \\URL: https://minikube.sigs.k8s.io/docs/
+\emph{Minikube}, \\Available at: https://minikube.sigs.k8s.io/docs/
 
 \bibitem[Docker Overview, 2022]{docker-overview}
-\emph{Docker Documentation}, 2022. \\URL: https://docs.docker.com/get-started/overview/
+\emph{Docker Documentation}, 2022. \\Available at: https://docs.docker.com/get-started/overview/
   
 \bibitem[Kubernetes Tools]{k8s-tools}
-\emph{Install Tools}, Kubernetes. \\URL: https://kubernetes.io/docs/tasks/tools/kubectl
+\emph{Install Tools}, Kubernetes. \\Available at: https://kubernetes.io/docs/tasks/tools/kubectl
 
 \bibitem[Learn GitHub Actions, 2022]{github-actions}
-\emph{Understanding GitHub Actions}, GitHub Docs. \\URL: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
+\emph{Understanding GitHub Actions}, GitHub Docs. \\Available at: https://docs.github.com/en/actions/learn-github-actions/understanding-github-actions
 
 \bibitem[P. Gorbachenko, 2021]{func-vs-nonfunc}
-\emph{Functional vs Non-Functional Requirements}, Enkonix. \\URL: https://enkonix.com/blog/functional-requirements-vs-non-functional/
+\emph{Functional vs Non-Functional Requirements}, Enkonix. \\Available at: https://enkonix.com/blog/functional-requirements-vs-non-functional/
 
 \bibitem[Agile Alliance, 2015]{user-stories}
-\emph{Agile Alliance}, Dec. 17, 2015. \\URL: https://www.agilealliance.org/glossary/user-stories/
+\emph{Agile Alliance}, Dec. 17, 2015. \\Available at: https://www.agilealliance.org/glossary/user-stories/
   
-
+\bibitem[Scrum Guides, 2021]{scrum-guides}
+\emph{Scrum Guide}, Scrum Guides. \\Available at: https://scrumguides.org/scrum-guide.html
+  
+\bibitem[Red Hat, 2022]{ci-cd}
+\emph{What is CI/CD?}, Red Hat. \\Available at: https://www.redhat.com/en/topics/devops/what-is-ci-cd
 
 \end{thebibliography}
 
@@ -595,10 +617,14 @@ This prototype serves to demonstrate that the permissions of an operator can be 
 \hypertarget{appendix-c}{https://github.com/heimdall-controller/rbac-prototype}
 
 \subsubsection*{D Prototype YouTube Demonstration} \label{appendix-d}
-\hypertarget{appendix-d}{}
+\hypertarget{appendix-d}{https://www.youtube.com/watch?v=m8tXulOU8y4}
 
 \subsubsection*{E Heimdall Report GitHub Repository} \label{appendix-e}
 \hypertarget{appendix-e}{https://github.com/heimdall-controller/heimdall-report}
+
+\subsubsection*{F Sprint Review Document} \label{appendix-f}
+\hypertarget{appendix-f}{https://docs.google.com/document/d/1-2GoGv4KZo0Blm5s8Z0NAZyT0wclrPDSab4et4ho7jg/edit?usp=sharing}
+
 
 
 \end{document}

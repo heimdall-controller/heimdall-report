@@ -153,7 +153,7 @@ As an example, the open-source e-learning platform Moodle can be used. In an edu
 
 In this example, it would be very easy to misconfigure one of the Operators to have a dissimilar desired state for the MySQL resource. This would cause both Operators to constantly change that resource. Imagine Moodle wanted the port in which database access occurred to be port 80 and Tutors wanted the database access to occur through port 81. This would cause the MySQL resource's access port to be changed back and forth. If a lecturer or student attempts to access information through Moodle, but at that point in time the MySQL resource's port was configured by the Tutors Operator, the user would not be able to retrieve the data. 
 
-\subsection{Aims and Objectives}
+\subsection{Aims and Objectives} \label{aims-and-obj}
 The solution is to create a custom Kubernetes controller which will monitor resource states. A Kubernetes Operator can create a resource, become its owner, and will set the controller to watch that resource for changes. If another operator changes the resource the controller will trigger an alert, notify the developer via a slack integration and allow the developer to fix the problem without the need for time-consuming debugging. 
 
 \begin{figure}[H]
@@ -274,9 +274,7 @@ These provide clear and concise descriptions of the desired functionality of Hei
 
 \subsection{Risk Analysis}
 
-There are a number of risks associated with this project's implementation, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed further in Sections \ref{mvp} and \ref{stretch-g}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
-
-
+There are a number of risks associated with this project's implementation, one of which is far more significant than the others. During the initial research into the viability of this project, there were no examples or previous attempts found that try to implement such a solution. This poses a significant risk as it means that it is not guaranteed that the implementation will be technically possible. An appropriate risk mitigation strategy is needed in order to ensure that the creation of Heimdall can still be completed to some degree. To do this, the project has been split up into a Minimum Viable Product (MVP) and stretch goals which are discussed briefly in Section \ref{aims-and-obj}. If after exhausting all attempts to implement the stretch goals, it is found that it is not possible, the MVP still provides a valid solution to the problem. \\\par If the implementation is confirmed to be technically possible, the next risk will be that the project cannot be completed within the given time constraint. Again, this can be partially mitigated by the use of the MVP and stretch goals. Although, with the use of the chosen methodologies discussed in Section \ref{methodology}, the use of Sprints and following a Continuous Delivery approach to development should mitigate any concerns about time.
 
  
 \section{Methodology} \label{methodology}
@@ -462,20 +460,42 @@ Git and GitHub are integral tools to implement a viable version control system a
 GitHub Actions provides a Continuous Integration and Continuous Delivery system for the automation of building, testing, and deploying software products. GitHub Action Workflows can be triggered upon a particular event like a push to the \emph{master} branch. Once triggered, it can perform actions like ensuring the project builds correctly, checking code formatting standards are met, and running tests. They can also be used to automate product releases \cite{github-actions}. This tool is already being utilized to build the LaTeX document on every Pull Request event and Push event for the Heimdall Report repository as seen in Appendix \hyperlink{appendix-e}{E}. This implementation provides a familiarity with GitHub Actions in preparation for Semester Two, while also ensuring the report is building successfully whenever changes are made.
 
 
-
 \subsection{Jira}
 
 Lastly, Jira is a tool which can be used by teams who adopt the Agile methodology discussed in Section \ref{agile}. It belongs to the Atlassian software set and provides templates for Scrum and Kanban boards for project management. Jira is the tool of choice for tracking pieces of work for this project. Originally, Trello was being used for this purpose. Trello is lightweight and easy to use but does not provide many of the features that come with Jira. The Burndown charts discussed in Section \ref{artifacts} are not possible to generate out-of-the-box with Trello and are only available through paid extensions while they are free with Jira. Other useful features like Sprint management, release creation, and automatic linking of GitHub Pull Requests to Jira Tasks made Jira the more favourable option.
 
 \section{Proof of Concept}
 
-\subsection{Slack Prototype}
+Three prototypes were created to demonstrate the feasibility and functionality of the different components of Heimdall. This section will provide a brief discussion of each prototype's capabilities. While the creation process will not be detailed here, this information can be seen in each respective repository as seen in the GitHub Organization in Appendix \hyperlink{appendix-a}{A} and a supporting video demonstration can be viewed in Appendix \hyperlink{appendix-d}{D}.
 
-\subsection{Watcher Prototype}
+\subsection{Slack and Watcher Prototypes}
 
-\subsection{Undecided Prototype}
+The Slack prototype is designed to send notifications to a Slack channel based on events occurring within a Kubernetes cluster, specifically Pod events. This demonstrates the possibility of out-of-cluster reactions to in-cluster events. The watcher prototype, on the other hand, demonstrates how a controller can watch specific resources such as Pods within a cluster and perform an action based on a specific event occurring to that resource. By merging these two prototypes together, it is possible to better demonstrate the potential capabilities of Heimdall and make the demonstration more effective. The combined functionality allows for external responses to be triggered by specific events occurring within the cluster, providing greater control and visibility into cluster activity.
+
+\begin{figure}[H]
+    \hypertarget{slack-notif}
+    \centering
+    \includegraphics[width=85mm]{prototypes/slacknotif.png}
+    \caption{\emph{Example Notification from Slack Prototype}}
+    \label{slack-notif}
+\end{figure}
+
+Figure \ref{slack-notif} shows an example notification being sent to a Slack channel called \emph{\#heimdall}. This Pod is identified by a specific label, such as \emph{heimdall: watching}, and is watched by the Controller. When an event occurs on that Pod, the Controller extracts the Slack API Key from a Kubernetes secret stored in-cluster and sends a Slack notification to the configured Slack channel.
 
 
+\subsection{RBAC Prototype}
+
+The RBAC Prototype demonstrates how to create and configure RBAC resources within a cluster through Controller code. As part of this prototype, an example operator called the \emph{changer-operator} was set up to continuously change the label of a Pod. The RBAC Prototype itself serves the function of creating Roles and Role bindings to reconfigure the permissions that the changer-operator possesses. The Controller logs of the creation of these Resources can be seen in Figure \ref{rbac-output}.
+
+\begin{figure}[H]
+    \hypertarget{rbac-output}
+    \centering
+    \includegraphics[width=165mm]{prototypes/rbac-output.png}
+    \caption{\emph{RBAC Prototype Controller Output}}
+    \label{rbac-output}
+\end{figure}
+
+This prototype serves to demonstrate that the permissions of an operator can be altered from a completely unrelated controller. This proves that Heimdall should, in some form, be able to alter an operator's RBAC configuration so that it is allowed or not allowed to make changes to a specific resource. While there will be many other factors in play during Heimdall's full implementation, this prototype serves as proof of feasibility that re-configuring the RBAC resources could be a possible method for accomplishing this task.
 
 \section{Summary}
 
@@ -565,17 +585,17 @@ Lastly, Jira is a tool which can be used by teams who adopt the Agile methodolog
 
 \clearpage
 \section*{Appendices}
-\subsubsection*{A Heimdall GitHub Organization} 
+\subsubsection*{A Heimdall GitHub Organization} \label{appendix-a}
 \hypertarget{appendix-a}{https://github.com/heimdall-controller}
 
 \subsubsection*{B Slack Prototype GitHub Repository} 
 \hypertarget{appendix-b}{https://github.com/heimdall-controller/slack-prototype}
 
-\subsubsection*{C Watcher Prototype GitHub Repository} 
-\hypertarget{appendix-c}{https://github.com/heimdall-controller/watcher-prototype}
+\subsubsection*{C RBAC Prototype GitHub Repository} 
+\hypertarget{appendix-c}{https://github.com/heimdall-controller/rbac-prototype}
 
-\subsubsection*{D Unstructured Prototype GitHub Repository} 
-\hypertarget{appendix-d}{https://github.com/heimdall-controller/unstructured-prototype}
+\subsubsection*{D Prototype YouTube Demonstration} \label{appendix-d}
+\hypertarget{appendix-d}{}
 
 \subsubsection*{E Heimdall Report GitHub Repository} \label{appendix-e}
 \hypertarget{appendix-e}{https://github.com/heimdall-controller/heimdall-report}
